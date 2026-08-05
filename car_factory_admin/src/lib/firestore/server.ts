@@ -59,13 +59,34 @@ export async function listUsersServer(): Promise<AppUser[]> {
     .get();
   return snap.docs.map((d) => {
     const data = d.data();
+    const address = data.address as Record<string, unknown> | null | undefined;
+    const tradeStats = data.tradeStats as
+      | Record<string, unknown>
+      | null
+      | undefined;
     return {
       uid: d.id,
+      name: data.name ? String(data.name) : undefined,
       displayName: data.displayName ? String(data.displayName) : undefined,
       email: data.email ? String(data.email) : undefined,
-      phone: data.phone ? String(data.phone) : undefined,
-      status: data.status,
+      phoneNumber: data.phoneNumber
+        ? String(data.phoneNumber)
+        : data.phone
+          ? String(data.phone)
+          : undefined,
+      providers: Array.isArray(data.providers)
+        ? data.providers.map(String)
+        : undefined,
+      defaultRegion: data.defaultRegion ? String(data.defaultRegion) : undefined,
+      address1: address?.address1 ? String(address.address1) : undefined,
+      status: data.status as AppUser["status"] | undefined,
       role: data.role ? String(data.role) : undefined,
+      profileCompleted: data.profileCompleted === true,
+      purchaseCount: Number(tradeStats?.purchaseCount ?? 0),
+      saleCount: Number(tradeStats?.saleCount ?? 0),
+      ratingAverage: Number(tradeStats?.ratingAverage ?? 0),
+      ratingCount: Number(tradeStats?.ratingCount ?? 0),
+      lastLoginAt: toDate(data.lastLoginAt),
       createdAt: toDate(data.createdAt),
       updatedAt: toDate(data.updatedAt),
     };

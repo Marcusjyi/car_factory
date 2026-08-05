@@ -1,0 +1,39 @@
+# Dependencies / build
+node_modules/
+.next/
+out/
+dist/
+build/
+functions/lib/
+coverage/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs / cache
+*.log
+.firebase/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+
+# Flutter native secrets
+**/android/app/google-services.json
+**/ios/Runner/GoogleService-Info.plist
+**/android/.gradle/
+**/android/local.properties
+**/ios/Pods/
+**/ios/.symlinks/
+
+# Editor / OS
+.idea/
+.DS_Store
+*.iml
+*.tsbuildinfo
+next-env.d.ts
+tsconfig.tsbuildinfo

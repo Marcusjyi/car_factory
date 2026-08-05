@@ -1,0 +1,42 @@
+{
+  "name": "carfactory",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "functions:build": "npm --prefix functions run build",
+    "emulators": "firebase emulators:start",
+    "create-admin": "node functions/scripts/create-admin.cjs",
+    "install:all": "npm install && npm --prefix functions install"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "firebase": "^12.16.0",
+    "firebase-admin": "^14.2.0",
+    "lucide-react": "^1.27.0",
+    "next": "^16.2.12",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "server-only": "^0.0.1",
+    "tailwind-merge": "^3.3.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.2.12",
+    "firebase-tools": "^15.24.0",
+    "postcss": "^8.5.6",
+    "prettier": "^3.9.6",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~5.9.3"
+  }
+}

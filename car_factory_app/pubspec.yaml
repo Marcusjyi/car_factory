@@ -1,0 +1,38 @@
+name: car_factory_app
+description: CARFACTORY 자동차 부품 C2C 마켓플레이스 모바일 앱
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # Firebase (스토어/웹과 동일 프로젝트)
+  firebase_core: ^4.13.0
+  firebase_auth: ^6.5.7
+  cloud_firestore: ^6.8.0
+  firebase_storage: ^13.4.6
+  cloud_functions: ^6.3.6
+  firebase_messaging: ^16.5.0
+  firebase_app_check: ^0.4.6
+
+  # Auth / UX
+  google_sign_in: ^7.2.0
+  go_router: ^17.3.0
+  flutter_riverpod: ^2.6.1
+  cached_network_image: ^3.4.1
+  intl: ^0.20.3
+  url_launcher: ^6.3.2
+  image_picker: ^1.2.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

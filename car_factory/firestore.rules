@@ -1,0 +1,180 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    /** mechanic_admin 동일: admins/{uid}, isApproved + role */
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isApproved == true
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role in ['admin', 'super_admin'];
+    }
+
+    function isSupportOrAdmin() {
+      return isAdmin();
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isSupportOrAdmin();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid)
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.status == resource.data.status;
+      allow delete: if false;
+    }
+
+    /** 닉네임·평점만 — 상품 상세 공개 표시용 */
+    match /publicProfiles/{uid} {
+      allow read: if true;
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasAll(['displayName'])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() >= 1
+        && request.resource.data.displayName.size() <= 80;
+      allow delete: if false;
+    }
+
+    match /products/{productId} {
+      allow read: if resource.data.status == 'selling'
+        || resource.data.status == 'reserved'
+        || resource.data.status == 'sold'
+        || (signedIn() && resource.data.sellerUid == request.auth.uid)
+        || isSupportOrAdmin();
+
+      allow create: if signedIn()
+        && request.resource.data.sellerUid == request.auth.uid
+        && request.resource.data.status == 'draft'
+        // listingNumber는 Cloud Functions만 발급
+        && !('listingNumber' in request.resource.data);
+
+      allow update: if (
+          signedIn()
+          && resource.data.sellerUid == request.auth.uid
+          && request.resource.data.sellerUid == resource.data.sellerUid
+          && (
+            !('listingNumber' in resource.data)
+            || request.resource.data.listingNumber == resource.data.listingNumber
+          )
+          && (
+            // 닉네임 스냅샷만 갱신
+            request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['sellerDisplayName', 'updatedAt'])
+            ||
+            (
+              (request.resource.data.price is int || request.resource.data.price is float)
+              && request.resource.data.price >= 0
+              // reserved 상태 전환은 Cloud Functions(직거래)만 가능
+              && resource.data.status != 'reserved'
+              && (
+                request.resource.data.status == resource.data.status
+                || request.resource.data.status in ['draft', 'selling', 'hidden', 'sold']
+              )
+            )
+          )
+        )
+        // 공개 상세 조회수 +1 (다른 필드 변경 불가)
+        || (
+          resource.data.status in ['selling', 'reserved', 'sold']
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['viewCount'])
+          && request.resource.data.viewCount is int
+          && request.resource.data.viewCount
+            == resource.data.get('viewCount', 0) + 1
+        );
+
+      // 본인 상품만 삭제 (앱에서는 status: hidden 소프트 삭제 사용)
+      allow delete: if signedIn()
+        && resource.data.sellerUid == request.auth.uid;
+    }
+
+    match /users/{uid}/favorites/{productId} {
+      allow read, create, delete: if isOwner(uid);
+      allow update: if false;
+    }
+
+    match /users/{uid}/addresses/{addressId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /users/{uid}/cartItems/{productId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    /** 채팅 미읽음 합계 등 — 본인 읽기, 쓰기는 Functions만 */
+    match /users/{uid}/counters/{counterId} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    match /orders/{orderId} {
+      allow read: if signedIn() && (
+        resource.data.buyerUid == request.auth.uid ||
+        resource.data.sellerUid == request.auth.uid ||
+        isSupportOrAdmin()
+      );
+      allow create, update, delete: if false;
+    }
+
+    match /payments/{paymentId} {
+      allow read: if signedIn() && (
+        resource.data.buyerUid == request.auth.uid || isSupportOrAdmin()
+      );
+      allow write: if false;
+    }
+
+    match /chatRooms/{roomId} {
+      allow read: if signedIn() && request.auth.uid in resource.data.participantUids;
+      allow create, update, delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/chatRooms/$(roomId)).data.participantUids;
+        allow create: if signedIn()
+          && request.resource.data.senderUid == request.auth.uid
+          && request.auth.uid in get(/databases/$(database)/documents/chatRooms/$(roomId)).data.participantUids
+          && get(/databases/$(database)/documents/chatRooms/$(roomId)).data.status == 'active'
+          && (
+            !('chatOpenUntil' in get(/databases/$(database)/documents/chatRooms/$(roomId)).data)
+            || get(/databases/$(database)/documents/chatRooms/$(roomId)).data.chatOpenUntil == null
+            || request.time <= get(/databases/$(database)/documents/chatRooms/$(roomId)).data.chatOpenUntil
+          );
+        allow update, delete: if false;
+      }
+    }
+
+    match /supportInquiries/{inquiryId} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if signedIn() && (
+        resource.data.uid == request.auth.uid || isSupportOrAdmin()
+      );
+      allow update: if isSupportOrAdmin();
+      allow delete: if false;
+    }
+
+    match /adminAuditLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    /**
+     * 운영자 계정 메타 (비밀번호 없음 — Auth email/password만 사용)
+     * 스키마: email, displayName, employeeId?, isApproved, role(admin|super_admin), timestamps
+     */
+    match /admins/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    /** 상품 고유번호 일별 시퀀스 — Cloud Functions(Admin)만 접근 */
+    match /productListingCounters/{dateKey} {
+      allow read, write: if false;
+    }
+  }
+}

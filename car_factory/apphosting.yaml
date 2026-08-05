@@ -1,0 +1,44 @@
+# Settings for Firebase App Hosting
+# NEXT_PUBLIC_* 는 클라이언트 공개 설정이라 value로 둡니다.
+runConfig:
+  minInstances: 0
+
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyAMRBVqsMWDD4srRWOzYeRk5hN3OvGKOTk
+    availability:
+      - BUILD
+      - RUNTIME
+  # OAuth Web 클라이언트 redirect URI가 이 도메인 기준으로 등록됨
+  # (iOS는 AuthProvider 에서 popup 사용. redirect 동일출처 전환 시 carfactory.kr + /__/auth 프록시)
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: car-factory-40a14.firebaseapp.com
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: car-factory-40a14
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: car-factory-40a14.firebasestorage.app
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "854722224560"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: 1:854722224560:web:1095faeaf38da7fa0eb675
+    availability:
+      - BUILD
+      - RUNTIME
+  # 콘솔 `(default)`(nam5)가 아닌 서울 DB ID `default`
+  - variable: NEXT_PUBLIC_FIRESTORE_DATABASE_ID
+    value: default
+    availability:
+      - BUILD
+      - RUNTIME

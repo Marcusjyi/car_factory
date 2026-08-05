@@ -60,30 +60,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(getClientAuth(), async (firebaseUser) => {
-      if (!firebaseUser) {
-        setUser(null);
-        setAdminUser(null);
-        setLoading(false);
-        return;
-      }
-      try {
-        const admin = await resolveAdminUser(firebaseUser);
-        setUser(firebaseUser);
-        setAdminUser(admin);
-        setError(null);
-      } catch (err) {
-        await signOut(getClientAuth());
-        setUser(null);
-        setAdminUser(null);
-        setError(
-          err instanceof Error ? err.message : "관리자 권한이 없습니다.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    });
-    return unsub;
+    let unsub = () => {};
+    try {
+      unsub = onAuthStateChanged(getClientAuth(), async (firebaseUser) => {
+        if (!firebaseUser) {
+          setUser(null);
+          setAdminUser(null);
+          setLoading(false);
+          return;
+        }
+        try {
+          const admin = await resolveAdminUser(firebaseUser);
+          setUser(firebaseUser);
+          setAdminUser(admin);
+          setError(null);
+        } catch (err) {
+          await signOut(getClientAuth());
+          setUser(null);
+          setAdminUser(null);
+          setError(
+            err instanceof Error ? err.message : "관리자 권한이 없습니다.",
+          );
+        } finally {
+          setLoading(false);
+        }
+      });
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Firebase 초기화에 실패했습니다.",
+      );
+      setLoading(false);
+    }
+    return () => unsub();
   }, []);
 
   async function login(email: string, password: string) {

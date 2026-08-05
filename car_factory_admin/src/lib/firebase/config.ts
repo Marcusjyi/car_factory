@@ -14,8 +14,17 @@ const firebaseConfig = {
 const FIRESTORE_DATABASE_ID =
   process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID || "default";
 
+function assertFirebaseConfig() {
+  if (!firebaseConfig.apiKey || !firebaseConfig.projectId || !firebaseConfig.appId) {
+    throw new Error(
+      "Firebase client config missing. Set NEXT_PUBLIC_FIREBASE_* in apphosting.yaml (BUILD).",
+    );
+  }
+}
+
 export function getFirebaseApp() {
   if (!getApps().length) {
+    assertFirebaseConfig();
     return initializeApp(firebaseConfig);
   }
   return getApp();

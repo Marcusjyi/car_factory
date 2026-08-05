@@ -17,4 +17,4 @@ flutter run
 | Functions | `asia-northeast3` |
 | package | `com.carfactory.car_factory_app` |
 
-관련 폴더: `car_factory_admin/`(어드민), `car_factory/`(스토어·Functions), `카팩토리 개발문서/`
+관련 폴더: `car_factory_admin/`(어드민), `car_factory_web/`(스토어·Functions), `카팩토리 개발문서/`

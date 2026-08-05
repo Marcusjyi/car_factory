@@ -4,7 +4,7 @@
 
 | 프로젝트 | 경로 |
 |----------|------|
-| 스토어 + Functions | `car_factory/` (이 폴더) |
+| 스토어 + Functions | `car_factory_web/` (이 폴더) |
 | 어드민 | `../car_factory_admin` |
 | Flutter 앱 | `../car_factory_app` |
 | 개발문서 | `../카팩토리 개발문서` |

@@ -2,7 +2,7 @@
 
 AI·개발자가 코드를 수정할 때 **1차 기준**은 워크스페이스 루트의 다음 폴더다.
 
-**`../카팩토리 개발문서/`** (`car_factory/` 형제 폴더)
+**`../카팩토리 개발문서/`**
 
 | 문서 | 용도 |
 |------|------|
@@ -14,10 +14,9 @@ AI·개발자가 코드를 수정할 때 **1차 기준**은 워크스페이스 �
 | `05-앱별-구조.md` | store / admin / mobile 경로 |
 | `06-변경시-체크리스트.md` | 작업 점검 |
 
-경로: 스토어=`car_factory/`, 어드민=`car_factory_admin/`, 앱=`car_factory_app/`
+경로: 스토어=`car_factory_web/`, 어드민=`car_factory_admin/`, 앱=`car_factory_app/`
 
-
-## 이 폴더(`car_factory/docs/`)의 역할
+## 이 폴더(`car_factory_web/docs/`)의 역할
 
 | 파일 | 역할 |
 |------|------|

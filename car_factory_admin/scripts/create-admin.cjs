@@ -5,13 +5,13 @@
  *   npm run create-admin -- <email> <password> [displayName] [employeeId] [role]
  *
  * 인증 (하나):
- *   1) car_factory_admin/.env.local 또는 ../car_factory/.env.local
+ *   1) car_factory_admin/.env.local 또는 ../car_factory_web/.env.local
  *      FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY
  *   2) FIREBASE_SERVICE_ACCOUNT_KEY (JSON 문자열)
  *   3) service-account.json
  *        - car_factory_admin/
- *        - car_factory/
- *        - car_factory/functions/
+ *        - car_factory_web/
+ *        - car_factory_web/functions/
  */
 
 const {existsSync, readFileSync} = require("fs");
@@ -21,7 +21,7 @@ const {getAuth} = require("firebase-admin/auth");
 const {getFirestore, FieldValue} = require("firebase-admin/firestore");
 
 const ADMIN_ROOT = resolve(__dirname, "..");
-const STORE = resolve(ADMIN_ROOT, "../car_factory");
+const STORE = resolve(ADMIN_ROOT, "../car_factory_web");
 
 function loadEnvFile(filePath) {
   if (!existsSync(filePath)) return;
@@ -113,8 +113,8 @@ function initAdmin() {
     console.error("Firebase Admin credential missing.");
     console.error("Put one of:");
     console.error("  - car_factory_admin/.env.local  FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY");
-    console.error("  - car_factory/.env.local        same keys");
-    console.error("  - service-account.json in car_factory_admin/ or car_factory/");
+    console.error("  - car_factory_web/.env.local     same keys");
+    console.error("  - service-account.json in car_factory_admin/ or car_factory_web/");
     process.exit(1);
   }
 

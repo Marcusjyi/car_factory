@@ -26,4 +26,4 @@
 - `orders` / `payments` / `chatRooms` 메타 클라이언트 쓰기
 - 이메일/비밀번호 가입 UI
 - `mechanic_admin` 수정
-- `car_factory/apps` 아래에 mobile 재생성
+- `car_factory_web/apps` 아래에 mobile 재생성

@@ -1,30 +1,39 @@
 # Dependencies / build
 node_modules/
+.pnp
+.pnp.js
+.pnp.*
 .next/
 out/
 dist/
+dist-ssr/
 build/
 functions/lib/
 coverage/
+.vercel/
 
 # Env / secrets
 .env
 .env.*
 !.env.example
 *.local
+*.pem
 service-account.json
 **/service-account.json
 
 # Logs / cache
 *.log
+logs/
 .firebase/
+firebase-debug.log
+ui-debug.log
+
+# Flutter
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-
-# Flutter native secrets
 **/android/app/google-services.json
 **/ios/Runner/GoogleService-Info.plist
 **/android/.gradle/

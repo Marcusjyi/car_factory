@@ -25,4 +25,11 @@ npm run dev
 ## 권한
 
 - Firestore `admins/{uid}` + Email/Password (`isApproved`, role)
-- 시드: `car_factory` 루트에서 `npm run create-admin -- ...`
+- 관리자 추가: **CLI만** (UI 추가 없음)
+- 스키마: `카팩토리 개발문서/ADMIN_SCHEMA.md`
+- 스크립트: `scripts/create-admin.cjs`
+
+```bash
+cd car_factory_admin
+npm run create-admin -- email@example.com "<password>" "Name" "000001" super_admin
+```

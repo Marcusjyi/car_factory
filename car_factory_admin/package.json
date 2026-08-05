@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start --port 3001",
     "lint": "eslint",
-    "create-admin": "node ../../functions/scripts/create-admin.cjs"
+    "create-admin": "node scripts/create-admin.cjs"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",

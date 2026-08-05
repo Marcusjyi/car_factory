@@ -26,8 +26,12 @@ firebase deploy --only firestore:rules,functions
 
 App Hosting: 이 폴더 루트 (`apphosting.yaml`).
 
-## 관리자 시드
+## 관리자 시드 (CLI만)
+
+스키마: [`../카팩토리 개발문서/ADMIN_SCHEMA.md`](../카팩토리%20개발문서/ADMIN_SCHEMA.md)  
+스크립트: [`../car_factory_admin/scripts/create-admin.cjs`](../car_factory_admin/scripts/create-admin.cjs)
 
 ```bash
+cd ../car_factory_admin
 npm run create-admin -- email@example.com "password" "Name" "000001" super_admin
 ```

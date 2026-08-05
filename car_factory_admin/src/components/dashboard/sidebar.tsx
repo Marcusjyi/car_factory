@@ -8,7 +8,6 @@ import {
   ShoppingBag,
   UserCircle,
   Users,
-  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -19,7 +18,6 @@ const navItems = [
   { href: "/dashboard/users", label: "회원", icon: Users },
   { href: "/dashboard/products", label: "상품", icon: Package },
   { href: "/dashboard/orders", label: "주문", icon: ShoppingBag },
-  { href: "/dashboard/admins", label: "관리자", icon: Shield },
 ];
 
 export function DashboardSidebar() {

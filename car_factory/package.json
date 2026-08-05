@@ -10,7 +10,6 @@
     "typecheck": "tsc --noEmit",
     "functions:build": "npm --prefix functions run build",
     "emulators": "firebase emulators:start",
-    "create-admin": "node functions/scripts/create-admin.cjs",
     "install:all": "npm install && npm --prefix functions install"
   },
   "dependencies": {

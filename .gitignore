@@ -12,6 +12,8 @@ coverage/
 .env.*
 !.env.example
 *.local
+service-account.json
+**/service-account.json
 
 # Logs / cache
 *.log

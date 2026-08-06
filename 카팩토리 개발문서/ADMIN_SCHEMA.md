@@ -31,10 +31,10 @@ Firebase Console → Authentication → **Email/Password** 활성화.
 
 인증 (하나):
 
-1. `car_factory_admin/.env.local` 또는 `car_factory/.env.local`  
+1. `car_factory_admin/.env.local` 또는 `car_factory_web/.env.local`  
    `FIREBASE_CLIENT_EMAIL` + `FIREBASE_PRIVATE_KEY`
 2. `service-account.json`  
-   `car_factory_admin/` 또는 `car_factory/`
+   `car_factory_admin/` 또는 `car_factory_web/`
 
 ```bash
 cd car_factory_admin

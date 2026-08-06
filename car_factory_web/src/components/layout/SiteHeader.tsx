@@ -10,9 +10,10 @@ import {
   Home,
 } from "lucide-react";
 import { HeaderAuthLinks } from "@/components/auth/HeaderAuthLinks";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useCartCount } from "@/features/cart/use-cart-count";
 import { useChatUnreadCount } from "@/features/chat/use-chat-unread-count";
-import { CATEGORY_GROUPS, SITE_NAME, SITE_NAME_KO } from "@/lib/constants";
+import { CATEGORY_GROUPS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 type SiteHeaderProps = {
@@ -43,13 +44,8 @@ export function SiteHeader({
 
       <div className="mx-auto max-w-[1200px] px-4 py-3 md:py-4">
         <div className="flex items-center gap-3 md:gap-6">
-          <Link href="/" className="shrink-0 leading-tight">
-            <span className="block text-lg font-extrabold tracking-tight text-primary md:text-[22px]">
-              {SITE_NAME}
-            </span>
-            <span className="hidden text-sm font-medium text-primary-soft sm:block">
-              {SITE_NAME_KO}
-            </span>
+          <Link href="/" className="shrink-0 leading-none" aria-label="CAR FACTORY 홈">
+            <BrandLogo />
           </Link>
 
           <form action="/parts" className="relative hidden min-w-0 flex-1 md:block">

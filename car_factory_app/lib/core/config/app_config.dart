@@ -14,6 +14,10 @@ abstract final class AppConfig {
 
   static const functionsRegion = 'asia-northeast3';
 
+  /// Google Sign-In Web client ID (google-services.json oauth_client type 3)
+  static const googleServerClientId =
+      '854722224560-80a3v0dms8img44fk6ojq8icfh0qcj2o.apps.googleusercontent.com';
+
   /// 카카오/네이버 Custom Token 콜백 베이스
   /// 예: https://asia-northeast3-car-factory-40a14.cloudfunctions.net
   static const functionsBaseUrl = String.fromEnvironment(

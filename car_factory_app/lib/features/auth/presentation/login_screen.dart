@@ -24,7 +24,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await action();
     } catch (e) {
-      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      final authMsg = ref.read(authControllerProvider).errorMessage;
+      setState(() {
+        _error = (authMsg != null && authMsg.isNotEmpty)
+            ? authMsg
+            : e.toString().replaceFirst('Exception: ', '');
+      });
     } finally {
       if (mounted) setState(() => _pending = null);
     }
@@ -44,11 +49,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            '소셜 계정으로만 로그인합니다. 이메일/비밀번호 회원가입은 없습니다.',
-            style: TextStyle(color: AppColors.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 28),
           if (_error != null || auth.errorMessage != null) ...[

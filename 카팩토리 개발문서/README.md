@@ -2,7 +2,7 @@
 
 > **AI·개발자 공통 참고 문서.** 코드 작성·수정 전에 반드시 이 폴더를 읽고, 변경 후에는 관련 문서를 갱신한다.
 
-최종 갱신: 2026-08-05
+최종 갱신: 2026-08-06
 
 ## 문서 읽는 순서 (작업 시작 시)
 
@@ -22,11 +22,13 @@
 
 | 경로 | 내용 |
 |------|------|
-| `car_factory/README.md` | 스토어 빠른 시작 |
+| `car_factory_web/README.md` | 스토어 빠른 시작 |
 | `car_factory_admin/README.md` | 어드민 빠른 시작 |
-| `car_factory/docs/COMMERCE_TODO.md` | 직거래 MVP·남은 커머스 작업 |
+| `car_factory_web/docs/COMMERCE_TODO.md` | 직거래 MVP·남은 커머스 작업 |
 | [ADMIN_SCHEMA.md](./ADMIN_SCHEMA.md) | `admins/{uid}` 스키마 · CLI는 `car_factory_admin/scripts` |
-| `car_factory/docs/CARFACTORY_CURSOR_DEVELOPMENT_SPEC_FIREBASE_ONLY.md` | 초기 전체 스펙(미래 PG·리뷰 포함 → **현재 구현과 다를 수 있음**) |
+| [05-앱별-구조.md](./05-앱별-구조.md) Mobile 절 | Android 패키지·디버그 SHA-1/SHA-256 |
+| `car_factory_app/docs/MOBILE_DEV.md` | Flutter Firebase·인증서 지문 요약 |
+| `car_factory_web/docs/CARFACTORY_CURSOR_DEVELOPMENT_SPEC_FIREBASE_ONLY.md` | 초기 전체 스펙(미래 PG·리뷰 포함 → **현재 구현과 다를 수 있음**) |
 
 > 스펙 문서와 본 폴더·`COMMERCE_TODO.md`가 충돌하면 **본 폴더 + COMMERCE_TODO + 실제 코드**를 우선한다.
 

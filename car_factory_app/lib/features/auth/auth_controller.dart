@@ -64,28 +64,46 @@ class AuthController extends StateNotifier<AuthState> {
     return UserDocument.fromMap(uid, snap.data()!);
   }
 
-  /// Google — Firebase Auth Provider (웹과 동일).
+  /// Google — Firebase Auth Provider (웹과 동일 계약).
+  ///
+  /// Android에서 google_sign_in 7.x 의 serverClientId 강제 요구를 피하기 위해
+  /// Firebase Auth `signInWithProvider` 를 사용한다.
   Future<void> signInWithGoogle() async {
     try {
-      await _googleSignIn.initialize();
-      final account = await _googleSignIn.authenticate();
-      final auth = account.authentication;
-      final idToken = auth.idToken;
-      if (idToken == null) {
-        throw StateError('Google ID 토큰을 받지 못했습니다.');
-      }
-      final credential = GoogleAuthProvider.credential(idToken: idToken);
-      await FirebaseBootstrap.auth.signInWithCredential(credential);
+      final provider = GoogleAuthProvider();
+      provider.addScope('email');
+      provider.addScope('profile');
+      await FirebaseBootstrap.auth.signInWithProvider(provider);
       await _ensureUserDoc();
     } catch (e) {
       state = AuthState(
         status: state.status,
         firebaseUser: state.firebaseUser,
         profile: state.profile,
-        errorMessage: 'Google 로그인 실패: $e',
+        errorMessage: _friendlyAuthError(e),
       );
       rethrow;
     }
+  }
+
+  String _friendlyAuthError(Object e) {
+    final raw = e.toString();
+    if (raw.contains('canceled') ||
+        raw.contains('cancelled') ||
+        raw.contains('ERROR_ABORTED')) {
+      return '로그인이 취소되었습니다.';
+    }
+    if (raw.contains('network') || raw.contains('NETWORK')) {
+      return '네트워크 오류가 발생했습니다. 연결을 확인해 주세요.';
+    }
+    if (raw.contains('DEVELOPER_ERROR') ||
+        raw.contains('10:') ||
+        raw.contains('clientConfigurationError')) {
+      return 'Google 로그인 설정이 필요합니다. '
+          'Firebase Console에 Android 앱(com.carfactory.car_factory_app)을 '
+          '등록하고 SHA-1을 추가한 뒤 google-services.json을 넣어 주세요.';
+    }
+    return 'Google 로그인 실패: $e';
   }
 
   /// 카카오/네이버는 Cloud Functions Custom Token 경로.

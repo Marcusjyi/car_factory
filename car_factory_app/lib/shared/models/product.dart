@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+
 enum ProductStatus { draft, selling, reserved, sold, hidden, blocked }
 
 enum ProductCondition { neu, used, refurbished }
@@ -58,6 +61,9 @@ class ProductImage {
   }
 
   String get cardURL => listURL ?? thumbURL ?? downloadURL;
+
+  String get detailURL =>
+      downloadURL.isNotEmpty ? downloadURL : (listURL ?? thumbURL ?? '');
 }
 
 class ProductPublicDto {
@@ -76,8 +82,17 @@ class ProductPublicDto {
     required this.status,
     this.location,
     this.listingNumber,
+    this.partNumber,
+    this.yearRange,
+    this.category,
     this.reservedBuyerUid,
     this.activeOrderId,
+    this.createdAt,
+    this.description = '',
+    this.shippingFee = 0,
+    this.viewCount = 0,
+    this.conditionGrade,
+    this.conditionDescription = '',
   });
 
   final String id;
@@ -94,14 +109,59 @@ class ProductPublicDto {
   final ProductStatus status;
   final String? location;
   final String? listingNumber;
+  final String? partNumber;
+  final String? yearRange;
+  final String? category;
   final String? reservedBuyerUid;
   final String? activeOrderId;
+  final DateTime? createdAt;
+  final String description;
+  final int shippingFee;
+  final int viewCount;
+  final String? conditionGrade;
+  final String conditionDescription;
+
+  /// 웹 gradeLabel 과 동일
+  String get conditionLabel {
+    if (conditionDescription.trim().isNotEmpty) {
+      return conditionDescription.trim();
+    }
+    final grade =
+        conditionGrade != null && conditionGrade!.isNotEmpty
+            ? ' (${conditionGrade}급)'
+            : '';
+    switch (condition) {
+      case ProductCondition.neu:
+        return '미사용 신품$grade';
+      case ProductCondition.refurbished:
+        return '재생$grade';
+      case ProductCondition.used:
+        return '중고$grade';
+    }
+  }
+
+  String get shippingLabel {
+    if (shippingFee <= 0) return '배송비 무료';
+    final formatted = NumberFormat('#,###').format(shippingFee);
+    return '배송비 ₩$formatted';
+  }
 
   factory ProductPublicDto.fromMap(String id, Map<String, dynamic> map) {
     final imagesRaw = (map['images'] as List<dynamic>? ?? const [])
         .whereType<Map>()
         .map((e) => ProductImage.fromMap(Map<String, dynamic>.from(e)))
-        .toList();
+        .toList()
+      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    final yearFrom = map['yearFrom'] as num? ?? map['modelYearFrom'] as num?;
+    final yearTo = map['yearTo'] as num? ?? map['modelYearTo'] as num?;
+    String? yearRange;
+    if (yearFrom != null && yearTo != null && yearFrom != yearTo) {
+      yearRange = '${yearFrom.toInt()}~${yearTo.toInt()}';
+    } else if (yearFrom != null) {
+      yearRange = '${yearFrom.toInt()}';
+    } else if (map['yearRange'] is String) {
+      yearRange = map['yearRange'] as String;
+    }
     return ProductPublicDto(
       id: id,
       title: map['title'] as String? ?? '',
@@ -115,11 +175,30 @@ class ProductPublicDto {
       sellerUid: map['sellerUid'] as String? ?? '',
       sellerDisplayName: map['sellerDisplayName'] as String? ?? '',
       status: _parseStatus(map['status'] as String?),
-      location: map['region'] as String?,
+      location: map['region'] as String? ?? map['location'] as String?,
       listingNumber: map['listingNumber'] as String?,
+      partNumber: map['partNumber'] as String? ?? map['oemNumber'] as String?,
+      yearRange: yearRange,
+      category: map['categoryId'] as String? ??
+          map['category'] as String? ??
+          map['partCategory'] as String?,
       reservedBuyerUid: map['reservedBuyerUid'] as String?,
       activeOrderId: map['activeOrderId'] as String?,
+      createdAt: _parseDate(map['createdAt']),
+      description: map['description'] as String? ?? '',
+      shippingFee: (map['shippingFee'] as num?)?.toInt() ?? 0,
+      viewCount: (map['viewCount'] as num?)?.toInt() ?? 0,
+      conditionGrade: map['conditionGrade'] as String?,
+      conditionDescription: map['conditionDescription'] as String? ?? '',
     );
+  }
+
+  static DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
   }
 
   static ProductStatus _parseStatus(String? value) {

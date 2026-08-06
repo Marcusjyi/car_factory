@@ -1,18 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../core/firebase/firebase_bootstrap.dart';
+import '../../shared/constants/categories.dart';
 import '../../shared/models/product.dart';
 
 class ProductSearchFilter {
   const ProductSearchFilter({
     this.q,
     this.manufacturer,
+    this.category,
     this.statuses = const [ProductStatus.selling, ProductStatus.reserved],
     this.limit = 20,
   });
 
   final String? q;
   final String? manufacturer;
+  final String? category;
   final List<ProductStatus> statuses;
   final int limit;
 }
@@ -36,6 +39,17 @@ class ProductRepository {
       return null;
     }
     return ProductPublicDto.fromMap(snap.id, data);
+  }
+
+  /// 조회수 +1 (웹 incrementViewCount 와 동일)
+  Future<void> incrementViewCount(String productId) async {
+    try {
+      await _products.doc(productId).update({
+        'viewCount': FieldValue.increment(1),
+      });
+    } catch (_) {
+      // 조회수 실패는 상세 진입을 막지 않음
+    }
   }
 
   Future<List<ProductPublicDto>> listProducts([
@@ -74,9 +88,27 @@ class ProductRepository {
                 p.title.toLowerCase().contains(q) ||
                 p.partName.toLowerCase().contains(q) ||
                 p.vehicleModelName.toLowerCase().contains(q) ||
-                p.manufacturer.toLowerCase().contains(q),
+                p.manufacturer.toLowerCase().contains(q) ||
+                (p.partNumber?.toLowerCase().contains(q) ?? false),
           )
           .toList();
+    }
+
+    final category = filter.category?.trim().toLowerCase();
+    if (category != null && category.isNotEmpty) {
+      final subIds = getSubCategoryIdsByGroup(category)
+          .map((e) => e.toLowerCase())
+          .toSet();
+      final groupLabel = getCategoryGroup(category)?.label.toLowerCase();
+      items = items.where((p) {
+        final raw = (p.category ?? '').toLowerCase();
+        if (raw.isEmpty) return false;
+        if (raw == category) return true;
+        if (groupLabel != null && raw == groupLabel) return true;
+        if (subIds.contains(raw)) return true;
+        if (getGroupBySubCategory(raw)?.id == category) return true;
+        return false;
+      }).toList();
     }
     return items;
   }

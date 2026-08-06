@@ -1,4 +1,7 @@
-// File generated manually for bootstrap.
+// File generated / updated from Firebase Console configs.
+// Android: android/app/google-services.json
+// iOS: ios/Runner/GoogleService-Info.plist (클라이언트 Apple ID 등록 후 추가)
+//
 // Prefer regenerating with: dart pub global run flutterfire_cli:flutterfire configure
 //
 // ignore_for_file: lines_longer_than_80_chars
@@ -7,11 +10,7 @@ import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
-/// 스토어 `apphosting.yaml` / 웹 클라이언트와 동일한 프로젝트 값.
-///
-/// Android·iOS 네이티브 앱을 Firebase Console에 등록한 뒤
-/// `google-services.json` / `GoogleService-Info.plist`를 넣고
-/// 이 파일의 appId·apiKey를 플랫폼별로 교체하세요.
+/// Firebase 프로젝트 `car-factory-40a14` 클라이언트 옵션.
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
@@ -38,16 +37,16 @@ class DefaultFirebaseOptions {
     storageBucket: 'car-factory-40a14.firebasestorage.app',
   );
 
-  /// TODO: Firebase Console → Android 앱 등록 후 값 교체
+  /// From android/app/google-services.json
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAMRBVqsMWDD4srRWOzYeRk5hN3OvGKOTk',
-    appId: '1:854722224560:web:1095faeaf38da7fa0eb675',
+    apiKey: 'AIzaSyBfyuCsXrwkvH7BaNfN6bmMuUkx1-Sdgps',
+    appId: '1:854722224560:android:53913cb206f4a0c30eb675',
     messagingSenderId: '854722224560',
     projectId: 'car-factory-40a14',
     storageBucket: 'car-factory-40a14.firebasestorage.app',
   );
 
-  /// TODO: Firebase Console → iOS 앱 등록 후 값 교체
+  /// TODO: iOS 앱 등록 후 GoogleService-Info.plist 값으로 교체
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAMRBVqsMWDD4srRWOzYeRk5hN3OvGKOTk',
     appId: '1:854722224560:web:1095faeaf38da7fa0eb675',

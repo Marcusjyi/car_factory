@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { COMPANY_INFO, SITE_NAME, SITE_NAME_KO } from "@/lib/constants";
+import { BrandLogo } from "@/components/brand/BrandLogo";
+import { COMPANY_INFO } from "@/lib/constants";
 
 const FOOTER_LINKS = [
   { href: "/support#terms", label: "이용약관" },
@@ -13,10 +14,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-[1200px] px-4 py-10">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-lg font-extrabold tracking-tight">
-              {SITE_NAME}
-            </p>
-            <p className="mt-0.5 text-sm text-white/70">{SITE_NAME_KO}</p>
+            <BrandLogo variant="light" />
             <p className="mt-3 max-w-md text-xs leading-relaxed text-white/55">
               중고·신품 자동차 부품을 안전하고 간편하게 거래하는 C2C 마켓플레이스입니다.
             </p>

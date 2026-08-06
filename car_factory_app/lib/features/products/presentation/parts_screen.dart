@@ -1,111 +1,367 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/models/product.dart';
-import '../../shell/presentation/main_shell.dart';
+import '../../../shared/widgets/cf_header.dart';
+import '../../../shared/widgets/product_card.dart';
 import '../product_repository.dart';
 
-final _partsQueryProvider = StateProvider<String>((ref) => '');
+final _partsQueryProvider = StateProvider.autoDispose<String>((ref) => '');
+final _partsCategoryProvider = StateProvider.autoDispose<String?>((ref) => null);
 
-final _partsListProvider = FutureProvider<List<ProductPublicDto>>((ref) {
+final _partsListProvider =
+    FutureProvider.autoDispose<List<ProductPublicDto>>((ref) {
   final q = ref.watch(_partsQueryProvider);
+  final category = ref.watch(_partsCategoryProvider);
   return ProductRepository().listProducts(
-    ProductSearchFilter(q: q.isEmpty ? null : q, limit: 40),
+    ProductSearchFilter(
+      q: q.isEmpty ? null : q,
+      category: category,
+      limit: 60,
+    ),
   );
 });
 
-class PartsScreen extends ConsumerWidget {
-  const PartsScreen({super.key});
+class PartsScreen extends ConsumerStatefulWidget {
+  const PartsScreen({super.key, this.initialCategory});
+
+  final String? initialCategory;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final list = ref.watch(_partsListProvider);
-    final currency = NumberFormat('#,###');
+  ConsumerState<PartsScreen> createState() => _PartsScreenState();
+}
 
-    return Scaffold(
-      appBar: cfAppBar(context, title: '부품 검색'),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: TextField(
-              decoration: const InputDecoration(
-                hintText: '차종, 부품명, 제조사 검색',
-                prefixIcon: Icon(Icons.search),
-              ),
-              textInputAction: TextInputAction.search,
-              onSubmitted: (v) {
-                ref.read(_partsQueryProvider.notifier).state = v.trim();
-              },
-            ),
-          ),
-          Expanded(
-            child: list.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('$e')),
-              data: (items) {
-                if (items.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      '검색 결과가 없습니다.',
-                      style: TextStyle(color: AppColors.textSecondary),
+class _PartsScreenState extends ConsumerState<PartsScreen> {
+  late final TextEditingController _searchController;
+
+  static const _filterOptions = <String, List<String>>{
+    '정렬': ['최신 등록순', '낮은 가격순', '높은 가격순', '인기순'],
+    '브랜드': ['전체', '현대', '기아', 'BMW', '벤츠', '아우디', '토요타', '기타'],
+    '상태': ['전체', '신품', '중고A', '중고B', '중고C'],
+    '가격': ['전체', '~10만', '10~30만', '30~50만', '50만~'],
+    '지역': ['전체', '서울', '경기', '인천', '부산', '대구', '기타'],
+    '배송': ['전체', '택배', '직거래', '둘 다'],
+  };
+
+  final Map<String, String> _selectedFilters = {
+    '정렬': '최신 등록순',
+    '브랜드': '전체',
+    '상태': '전체',
+    '가격': '전체',
+    '지역': '전체',
+    '배송': '전체',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    if (widget.initialCategory != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(_partsCategoryProvider.notifier).state =
+            widget.initialCategory;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openFilterSheet() async {
+    final cf = context.cf;
+    final draft = Map<String, String>.from(_selectedFilters);
+    var draftCategory = ref.read(_partsCategoryProvider);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: cf.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            Widget chip({
+              required String label,
+              required bool selected,
+              required VoidCallback onTap,
+            }) {
+              return GestureDetector(
+                onTap: onTap,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: cf.surfaceVariant,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: selected ? AppColors.accentBlue : cf.divider,
                     ),
-                  );
-                }
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                  itemCount: items.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) {
-                    final p = items[i];
-                    return ListTile(
-                      onTap: () => context.push('/parts/${p.id}'),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: AppColors.border),
-                      ),
-                      tileColor: AppColors.surface,
-                      leading: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: SizedBox(
-                          width: 56,
-                          height: 56,
-                          child: p.thumbnailURL.isEmpty
-                              ? const ColoredBox(
-                                  color: AppColors.bg,
-                                  child: Icon(Icons.image_outlined),
-                                )
-                              : Image.network(
-                                  p.thumbnailURL,
-                                  fit: BoxFit.cover,
-                                ),
+                  ),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: selected
+                          ? AppColors.accentBlue
+                          : cf.textPrimary,
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 12,
+                  bottom: 16 + MediaQuery.viewInsetsOf(ctx).bottom,
+                ),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.sizeOf(ctx).height * 0.85,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 36,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: cf.divider,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
                       ),
-                      title: Text(
-                        p.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Text(
+                            '필터',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: cf.textPrimary,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () {
+                              setModalState(() {
+                                for (final key in draft.keys) {
+                                  draft[key] = key == '정렬' ? '최신 등록순' : '전체';
+                                }
+                                draftCategory = null;
+                              });
+                            },
+                            child: Text(
+                              '초기화',
+                              style: TextStyle(color: cf.textSecondary),
+                            ),
+                          ),
+                        ],
                       ),
-                      subtitle: Text(
-                        '${p.manufacturer} · ${p.vehicleModelName}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 8),
+                      Flexible(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '카테고리',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: cf.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  chip(
+                                    label: '전체',
+                                    selected: draftCategory == null,
+                                    onTap: () {
+                                      setModalState(() => draftCategory = null);
+                                    },
+                                  ),
+                                  ...kSearchCategories.map(
+                                    (c) => chip(
+                                      label: c.displayLabel,
+                                      selected: draftCategory == c.id,
+                                      onTap: () {
+                                        setModalState(
+                                          () => draftCategory = c.id,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              ..._filterOptions.entries.map((entry) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        entry.key,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: cf.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: entry.value.map((option) {
+                                          final selected =
+                                              draft[entry.key] == option;
+                                          return chip(
+                                            label: option,
+                                            selected: selected,
+                                            onTap: () {
+                                              setModalState(() {
+                                                draft[entry.key] = option;
+                                              });
+                                            },
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
                       ),
-                      trailing: Text(
-                        '${currency.format(p.price)}원',
-                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: () {
+                            setState(() {
+                              _selectedFilters
+                                ..clear()
+                                ..addAll(draft);
+                            });
+                            ref.read(_partsCategoryProvider.notifier).state =
+                                draftCategory;
+                            Navigator.pop(ctx);
+                          },
+                          child: const Text('적용'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final list = ref.watch(_partsListProvider);
+    final cf = context.cf;
+
+    return Scaffold(
+      backgroundColor: cf.background,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CfHeader(
+              showBell: false,
+              trailing: TextButton.icon(
+                onPressed: _openFilterSheet,
+                icon: Icon(
+                  CupertinoIcons.line_horizontal_3_decrease,
+                  size: 18,
+                  color: cf.textPrimary,
+                ),
+                label: Text(
+                  '필터',
+                  style: TextStyle(color: cf.textPrimary, fontSize: 14),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: CfSearchBar(
+                controller: _searchController,
+                onSubmitted: (v) {
+                  ref.read(_partsQueryProvider.notifier).state = v.trim();
+                },
+                onChanged: (v) {
+                  if (v.isEmpty) {
+                    ref.read(_partsQueryProvider.notifier).state = '';
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: list.when(
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('$e')),
+                data: (items) {
+                  if (items.isEmpty) {
+                    return Center(
+                      child: Text(
+                        '검색 결과가 없습니다.',
+                        style: TextStyle(color: cf.textSecondary),
                       ),
                     );
-                  },
-                );
-              },
+                  }
+                  return GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.72,
+                    ),
+                    itemCount: items.length,
+                    itemBuilder: (context, i) {
+                      final p = items[i];
+                      return ProductCard(
+                        product: p,
+                        onTap: () => context.push('/parts/${p.id}'),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

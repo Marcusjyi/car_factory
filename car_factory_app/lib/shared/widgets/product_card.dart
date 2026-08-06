@@ -59,6 +59,21 @@ class ProductCard extends StatelessWidget {
   final VoidCallback onTap;
   final double? width;
 
+  /// 가로 스크롤 리스트용 높이 (4:3 이미지 + 본문, 텍스트 스케일 반영)
+  static double horizontalListHeight(BuildContext context, double width) {
+    final scaler = MediaQuery.textScalerOf(context);
+    final imageH = width * 3 / 4;
+    // 패딩 18 + 메이커·부품명2줄·금액·등록일·간격 (기본 14 기준)
+    final bodyH = scaler.scale(14) / 14 * 124;
+    return imageH + bodyH;
+  }
+
+  /// 홈 등 가로 카드 폭 — 화면 너비에 비례
+  static double horizontalCardWidth(BuildContext context) {
+    final w = MediaQuery.sizeOf(context).width;
+    return (w * 0.38).clamp(132.0, 168.0);
+  }
+
   @override
   Widget build(BuildContext context) {
     final cf = context.cf;
@@ -89,6 +104,7 @@ class ProductCard extends StatelessWidget {
             border: Border.all(color: cf.divider),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AspectRatio(
@@ -153,6 +169,7 @@ class ProductCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (makerVehicle.isNotEmpty)
@@ -161,7 +178,9 @@ class ProductCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
+                          fontSize: 13,
                           fontWeight: FontWeight.w500,
+                          height: 1.25,
                           color: cf.textPrimary,
                         ),
                       ),
@@ -183,6 +202,7 @@ class ProductCard extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
+                        height: 1.2,
                         color: cf.textPrimary,
                       ),
                     ),
@@ -192,6 +212,7 @@ class ProductCard extends StatelessWidget {
                         registered,
                         style: TextStyle(
                           fontSize: 11,
+                          height: 1.2,
                           color: cf.textSecondary,
                         ),
                       ),

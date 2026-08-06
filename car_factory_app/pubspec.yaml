@@ -40,3 +40,4 @@ flutter:
   assets:
     - assets/category_lightMode/
     - assets/category_darkMode/
+    - assets/shops/

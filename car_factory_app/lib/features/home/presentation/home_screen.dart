@@ -115,9 +115,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       );
                     }
-                    const cardWidth = 140.0;
-                    // 4:3 이미지 + 본문(메이커·부품명2줄·금액·등록일)
-                    const listHeight = cardWidth * 3 / 4 + 108;
+                    final cardWidth = ProductCard.horizontalCardWidth(context);
+                    final listHeight =
+                        ProductCard.horizontalListHeight(context, cardWidth);
                     return SizedBox(
                       height: listHeight,
                       child: ListView.separated(
@@ -127,10 +127,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         separatorBuilder: (_, _) => const SizedBox(width: 12),
                         itemBuilder: (context, i) {
                           final p = items[i];
-                          return ProductCard(
-                            product: p,
-                            width: cardWidth,
-                            onTap: () => context.push('/parts/${p.id}'),
+                          return Align(
+                            alignment: Alignment.topCenter,
+                            child: ProductCard(
+                              product: p,
+                              width: cardWidth,
+                              onTap: () => context.push('/parts/${p.id}'),
+                            ),
                           );
                         },
                       ),
@@ -140,9 +143,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
               SliverToBoxAdapter(
-                child: _SectionHeader(
-                  title: '내 주변 장착점',
-                  onViewAll: () {},
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Row(
+                    children: [
+                      Text(
+                        '카팩토리 파트너스',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: context.cf.textPrimary,
+                        ),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () {},
+                        child: Text(
+                          '장착점 찾기 >',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: context.cf.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: _ShopBannerImage(),
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
@@ -307,6 +338,136 @@ class _HeroBanner extends StatelessWidget {
   }
 }
 
+/// 장착점 배너 이미지 (카드와 분리)
+class _ShopBannerImage extends StatelessWidget {
+  const _ShopBannerImage();
+
+  static const _darkAsset = 'assets/shops/uijeongbu.png';
+  static const _lightAsset = 'assets/shops/uijeongbu_light.png';
+
+  @override
+  Widget build(BuildContext context) {
+    final cf = context.cf;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryLine = isDark ? Colors.white : const Color(0xFF111111);
+    final subtitleColor = isDark
+        ? Colors.white.withValues(alpha: 0.72)
+        : const Color(0xFF464646);
+
+    return Container(
+      foregroundDecoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cf.divider),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: AspectRatio(
+          aspectRatio: 16 / 9,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset(
+                isDark ? _darkAsset : _lightAsset,
+                fit: BoxFit.cover,
+                alignment: Alignment.centerRight,
+                filterQuality: FilterQuality.medium,
+                errorBuilder: (_, _, _) => ColoredBox(
+                  color: cf.surfaceVariant,
+                  child: Icon(
+                    CupertinoIcons.building_2_fill,
+                    color: cf.textSecondary,
+                    size: 40,
+                  ),
+                ),
+              ),
+              // 왼쪽 가독성용 그라데이션
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: isDark
+                        ? const [
+                            Color(0xE6000000),
+                            Color(0x99000000),
+                            Color(0x00000000),
+                          ]
+                        : const [
+                            Color(0xF2FFFFFF),
+                            Color(0xCCFFFFFF),
+                            Color(0x00FFFFFF),
+                          ],
+                    stops: const [0.0, 0.42, 0.72],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final titleSize =
+                        (constraints.maxHeight * 0.125).clamp(16.0, 22.0);
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text.rich(
+                            TextSpan(
+                              style: TextStyle(
+                                fontSize: titleSize,
+                                fontWeight: FontWeight.w900,
+                                height: 1.18,
+                                letterSpacing: -0.4,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: '부품은\n',
+                                  style: TextStyle(color: primaryLine),
+                                ),
+                                const TextSpan(
+                                  text: '쉽게\n',
+                                  style: TextStyle(
+                                    color: AppColors.accentBlue,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: '장착은\n',
+                                  style: TextStyle(color: primaryLine),
+                                ),
+                                const TextSpan(
+                                  text: '믿음직하게',
+                                  style: TextStyle(
+                                    color: AppColors.accentBlue,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: titleSize * 0.28),
+                          Text(
+                            '믿을 수 있는 장착 서비스',
+                            style: TextStyle(
+                              fontSize: (titleSize * 0.52).clamp(11.0, 13.0),
+                              fontWeight: FontWeight.w500,
+                              color: subtitleColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ShopCard extends StatelessWidget {
   const _ShopCard();
 
@@ -329,7 +490,10 @@ class _ShopCard extends StatelessWidget {
               child: SizedBox(
                 width: 64,
                 height: 64,
-                child: Icon(CupertinoIcons.building_2_fill, color: cf.textSecondary),
+                child: Icon(
+                  CupertinoIcons.building_2_fill,
+                  color: cf.textSecondary,
+                ),
               ),
             ),
           ),
@@ -377,10 +541,10 @@ class _ShopCard extends StatelessWidget {
                   style: TextStyle(fontSize: 12, color: cf.textSecondary),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
+                const Wrap(
                   spacing: 6,
                   runSpacing: 4,
-                  children: const [
+                  children: [
                     _TagChip('정품 부품 취급'),
                     _TagChip('당일 장착 가능'),
                     _TagChip('보증 서비스'),

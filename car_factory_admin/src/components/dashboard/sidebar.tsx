@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CalendarClock,
   LayoutDashboard,
   Package,
   ShoppingBag,
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/dashboard/products", label: "상품", icon: Package },
   { href: "/dashboard/orders", label: "주문", icon: ShoppingBag },
   { href: "/dashboard/partners", label: "파트너스", icon: Store },
+  { href: "/dashboard/reservations", label: "장착 예약", icon: CalendarClock },
 ];
 
 export function DashboardSidebar() {

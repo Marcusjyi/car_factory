@@ -5,6 +5,7 @@ import { ArrowLeft, Clock, MapPin, Phone, Wrench } from "lucide-react";
 import { SiteHeader, Breadcrumbs } from "@/components/layout/SiteHeader";
 import { FeatureBar } from "@/components/layout/FeatureBar";
 import { getInstallerById } from "@/lib/partners-server";
+import { InstallerReserveForm } from "./ReserveForm";
 
 type PageProps = {
   params: Promise<{ installerId: string }>;
@@ -87,128 +88,15 @@ export default async function InstallerReservePage({ params }: PageProps) {
               </ul>
             </div>
 
-            <form className="space-y-5 border-t border-border pt-6" action="#">
-              <h2 className="text-base font-bold text-text">예약 정보</h2>
-
-              <div>
-                <label
-                  htmlFor="name"
-                  className="mb-1.5 block text-sm font-semibold text-text"
-                >
-                  이름
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  placeholder="예약자 이름"
-                  className="h-11 w-full rounded-lg border border-border-strong bg-white px-4 text-sm outline-none transition focus:border-primary"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="phone"
-                  className="mb-1.5 block text-sm font-semibold text-text"
-                >
-                  연락처
-                </label>
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  required
-                  placeholder="010-0000-0000"
-                  className="h-11 w-full rounded-lg border border-border-strong bg-white px-4 text-sm outline-none transition focus:border-primary"
-                />
-              </div>
-
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="date"
-                    className="mb-1.5 block text-sm font-semibold text-text"
-                  >
-                    희망 날짜
-                  </label>
-                  <input
-                    id="date"
-                    name="date"
-                    type="date"
-                    required
-                    className="h-11 w-full rounded-lg border border-border-strong bg-white px-4 text-sm outline-none transition focus:border-primary"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="time"
-                    className="mb-1.5 block text-sm font-semibold text-text"
-                  >
-                    희망 시간
-                  </label>
-                  <select
-                    id="time"
-                    name="time"
-                    required
-                    defaultValue=""
-                    className="h-11 w-full rounded-lg border border-border-strong bg-white px-4 text-sm outline-none transition focus:border-primary"
-                  >
-                    <option value="" disabled>
-                      시간 선택
-                    </option>
-                    <option value="10:00">10:00</option>
-                    <option value="11:00">11:00</option>
-                    <option value="13:00">13:00</option>
-                    <option value="14:00">14:00</option>
-                    <option value="15:00">15:00</option>
-                    <option value="16:00">16:00</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="part"
-                  className="mb-1.5 block text-sm font-semibold text-text"
-                >
-                  장착 부품 / 주문번호
-                </label>
-                <input
-                  id="part"
-                  name="part"
-                  type="text"
-                  placeholder="예: 헤드램프 / CF-2026-0012"
-                  className="h-11 w-full rounded-lg border border-border-strong bg-white px-4 text-sm outline-none transition focus:border-primary"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="memo"
-                  className="mb-1.5 block text-sm font-semibold text-text"
-                >
-                  요청 사항
-                </label>
-                <textarea
-                  id="memo"
-                  name="memo"
-                  rows={4}
-                  placeholder="차량 정보, 특이사항 등을 적어 주세요"
-                  className="w-full rounded-lg border border-border-strong bg-white px-4 py-3 text-sm outline-none transition focus:border-primary"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="flex h-12 w-full items-center justify-center rounded-lg bg-primary text-sm font-bold text-white hover:bg-primary-dark"
-              >
-                예약 신청하기
-              </button>
-              <p className="text-center text-xs text-text-muted">
-                * 현재는 UI 미리보기입니다. 신청 내용은 저장되지 않습니다.
-              </p>
-            </form>
+            <InstallerReserveForm
+              partner={{
+                id: shop.id,
+                name: shop.name,
+                region: shop.region,
+                address: shop.address,
+                phone: shop.phone,
+              }}
+            />
           </div>
         </section>
       </main>

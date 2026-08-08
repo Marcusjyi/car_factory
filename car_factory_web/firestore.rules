@@ -186,6 +186,80 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    /**
+     * 장착점 예약 (partnerReservations)
+     * - who: customerName, customerPhone, uid?
+     * - which: partnerId + partnerName/region/address/phone 스냅샷
+     * - when: preferredDate (YYYY-MM-DD), preferredTime, createdAt(신청시각)
+     */
+    function partnerReservationCreateOk() {
+      let d = request.resource.data;
+      return d.keys().hasOnly([
+          'customerName', 'customerPhone', 'uid',
+          'partnerId', 'partnerName', 'partnerRegion',
+          'partnerAddress', 'partnerPhone',
+          'preferredDate', 'preferredTime',
+          'partOrOrder', 'memo',
+          'status', 'source',
+          'createdAt', 'updatedAt'
+        ])
+        && d.customerName is string
+        && d.customerName.size() >= 1
+        && d.customerName.size() <= 80
+        && d.customerPhone is string
+        && d.customerPhone.size() >= 9
+        && d.customerPhone.size() <= 20
+        && d.partnerId is string
+        && d.partnerId.size() >= 1
+        && d.partnerId.size() <= 128
+        && d.partnerName is string
+        && d.partnerName.size() >= 1
+        && d.partnerName.size() <= 120
+        && d.partnerRegion is string
+        && d.partnerRegion.size() <= 80
+        && d.partnerAddress is string
+        && d.partnerAddress.size() <= 300
+        && d.partnerPhone is string
+        && d.partnerPhone.size() <= 40
+        && d.preferredDate is string
+        && d.preferredDate.size() == 10
+        && d.preferredTime is string
+        && d.preferredTime in ['10:00', '11:00', '13:00', '14:00', '15:00', '16:00']
+        && d.partOrOrder is string
+        && d.partOrOrder.size() <= 200
+        && d.memo is string
+        && d.memo.size() <= 2000
+        && d.status == 'pending'
+        && d.source in ['web', 'app']
+        && d.createdAt == request.time
+        && d.updatedAt == request.time
+        && (
+          signedIn()
+            ? ('uid' in d && d.uid == request.auth.uid)
+            : !('uid' in d)
+        );
+    }
+
+    match /partnerReservations/{reservationId} {
+      allow create: if partnerReservationCreateOk();
+      allow read: if isAdmin()
+        || (signedIn()
+          && 'uid' in resource.data
+          && resource.data.uid == request.auth.uid);
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'updatedAt', 'adminNote'])
+        && request.resource.data.status in
+          ['pending', 'confirmed', 'cancelled', 'completed']
+        && request.resource.data.updatedAt == request.time
+        && (
+          !('adminNote' in request.resource.data)
+          || (request.resource.data.adminNote is string
+            && request.resource.data.adminNote.size() <= 1000)
+        );
+      allow delete: if isAdmin();
+    }
+
     /** 상품 고유번호 일별 시퀀스 — Cloud Functions(Admin)만 접근 */
     match /productListingCounters/{dateKey} {
       allow read, write: if false;

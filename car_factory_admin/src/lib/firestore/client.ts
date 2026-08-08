@@ -22,6 +22,8 @@ import type {
   DashboardStats,
   OrderRow,
   Partner,
+  PartnerReservation,
+  PartnerReservationStatus,
   PartnerWriteInput,
   Product,
   ProductStatus,
@@ -388,4 +390,44 @@ export async function listActivePartners(): Promise<Partner[]> {
     const all = await listPartners();
     return all.filter((p) => p.isActive);
   }
+}
+
+function parsePartnerReservation(
+  id: string,
+  data: DocumentData,
+): PartnerReservation {
+  const status = String(data.status ?? "pending") as PartnerReservationStatus;
+  const source = data.source === "app" ? "app" : "web";
+  return {
+    id,
+    customerName: String(data.customerName ?? ""),
+    customerPhone: String(data.customerPhone ?? ""),
+    uid: data.uid ? String(data.uid) : undefined,
+    partnerId: String(data.partnerId ?? ""),
+    partnerName: String(data.partnerName ?? ""),
+    partnerRegion: String(data.partnerRegion ?? ""),
+    partnerAddress: String(data.partnerAddress ?? ""),
+    partnerPhone: String(data.partnerPhone ?? ""),
+    preferredDate: String(data.preferredDate ?? ""),
+    preferredTime: String(data.preferredTime ?? ""),
+    partOrOrder: String(data.partOrOrder ?? ""),
+    memo: String(data.memo ?? ""),
+    status,
+    source,
+    createdAt: toDate(data.createdAt),
+    updatedAt: toDate(data.updatedAt),
+    adminNote: data.adminNote ? String(data.adminNote) : undefined,
+  };
+}
+
+/** 장착점 예약 — 최신순 */
+export async function listPartnerReservations(): Promise<PartnerReservation[]> {
+  const snap = await getDocs(
+    query(
+      collection(getClientFirestore(), "partnerReservations"),
+      orderBy("createdAt", "desc"),
+      limit(200),
+    ),
+  );
+  return snap.docs.map((d) => parsePartnerReservation(d.id, d.data()));
 }

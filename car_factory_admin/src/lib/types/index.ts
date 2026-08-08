@@ -123,3 +123,31 @@ export type PartnerWriteInput = {
   /** 웹·앱 동시 노출 */
   isActive: boolean;
 };
+
+/** 장착점 예약 (partnerReservations) */
+export type PartnerReservationStatus =
+  | "pending"
+  | "confirmed"
+  | "cancelled"
+  | "completed";
+
+export interface PartnerReservation {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  uid?: string;
+  partnerId: string;
+  partnerName: string;
+  partnerRegion: string;
+  partnerAddress: string;
+  partnerPhone: string;
+  preferredDate: string;
+  preferredTime: string;
+  partOrOrder: string;
+  memo: string;
+  status: PartnerReservationStatus;
+  source: "web" | "app";
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  adminNote?: string;
+}

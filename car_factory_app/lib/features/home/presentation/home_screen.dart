@@ -166,7 +166,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const Spacer(),
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          final p =
+                              ref.read(_featuredPartnerProvider).asData?.value;
+                          if (p != null) {
+                            context.push('/installers/${p.id}/reserve');
+                          }
+                        },
                         child: Text(
                           '장착점 찾기 >',
                           style: TextStyle(
@@ -194,10 +200,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       final partnerAsync = ref.watch(_featuredPartnerProvider);
                       return partnerAsync.when(
                         data: (partner) => partner == null
-                            ? const SizedBox.shrink()
+                            ? const _ShopCardEmpty()
                             : _ShopCard(partner: partner),
                         loading: () => const _ShopCardSkeleton(),
-                        error: (_, _) => const SizedBox.shrink(),
+                        error: (_, _) => const _ShopCardEmpty(),
                       );
                     },
                   ),
@@ -562,115 +568,149 @@ class _ShopCard extends StatelessWidget {
         side: BorderSide(color: cf.divider),
       ),
       clipBehavior: Clip.antiAlias,
-      child: SizedBox(
-        height: _cardHeight,
-        width: double.infinity,
-        child: Row(
-          children: [
-            SizedBox(
-              width: _cardHeight,
-              height: _cardHeight,
-              child: photoChild,
-            ),
-            Expanded(
-              child: SizedBox(
+      child: InkWell(
+        onTap: () => context.push('/installers/${partner.id}/reserve'),
+        child: SizedBox(
+          height: _cardHeight,
+          width: double.infinity,
+          child: Row(
+            children: [
+              SizedBox(
+                width: _cardHeight,
                 height: _cardHeight,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                                color: cf.textPrimary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            CupertinoIcons.checkmark_seal_fill,
-                            size: 16,
-                            color: AppColors.accentBlue,
-                          ),
-                        ],
-                      ),
-                      if (ratingText.isNotEmpty) ...[
-                        const SizedBox(height: 3),
+                child: photoChild,
+              ),
+              Expanded(
+                child: SizedBox(
+                  height: _cardHeight,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                         Row(
                           children: [
-                            const Icon(
-                              CupertinoIcons.star_fill,
-                              size: 14,
-                              color: Color(0xFFFFCC00),
-                            ),
-                            const SizedBox(width: 3),
-                            Flexible(
+                            Expanded(
                               child: Text(
-                                ratingText,
+                                name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  color: cf.textSecondary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                  color: cf.textPrimary,
                                 ),
                               ),
                             ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              CupertinoIcons.checkmark_seal_fill,
+                              size: 16,
+                              color: AppColors.accentBlue,
+                            ),
                           ],
                         ),
-                      ],
-                      if (specialty.isNotEmpty) ...[
-                        const SizedBox(height: 3),
-                        Text(
-                          specialty,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: cf.textSecondary,
-                          ),
-                        ),
-                      ],
-                      if (address.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          address,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: cf.textSecondary,
-                          ),
-                        ),
-                      ],
-                      if (badges.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
+                        if (ratingText.isNotEmpty) ...[
+                          const SizedBox(height: 3),
+                          Row(
                             children: [
-                              for (final b in badges.take(3)) ...[
-                                _TagChip(b),
-                                const SizedBox(width: 6),
-                              ],
+                              const Icon(
+                                CupertinoIcons.star_fill,
+                                size: 14,
+                                color: Color(0xFFFFCC00),
+                              ),
+                              const SizedBox(width: 3),
+                              Flexible(
+                                child: Text(
+                                  ratingText,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: cf.textSecondary,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
-                        ),
+                        ],
+                        if (specialty.isNotEmpty) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            specialty,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: cf.textSecondary,
+                            ),
+                          ),
+                        ],
+                        if (address.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            address,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: cf.textSecondary,
+                            ),
+                          ),
+                        ],
+                        if (badges.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                for (final b in badges.take(3)) ...[
+                                  _TagChip(b),
+                                  const SizedBox(width: 6),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShopCardEmpty extends StatelessWidget {
+  const _ShopCardEmpty();
+
+  static const double _cardHeight = 132;
+
+  @override
+  Widget build(BuildContext context) {
+    final cf = context.cf;
+    return Material(
+      color: cf.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: cf.divider),
+      ),
+      child: SizedBox(
+        height: _cardHeight,
+        width: double.infinity,
+        child: Center(
+          child: Text(
+            '등록된 장착점이 없습니다',
+            style: TextStyle(
+              fontSize: 14,
+              color: cf.textSecondary,
             ),
-          ],
+          ),
         ),
       ),
     );

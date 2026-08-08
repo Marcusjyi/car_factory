@@ -9,6 +9,7 @@ import '../../features/chat/presentation/chat_list_screen.dart';
 import '../../features/chat/presentation/chat_room_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/mypage/presentation/mypage_screen.dart';
+import '../../features/partners/presentation/partner_reserve_screen.dart';
 import '../../features/products/presentation/parts_screen.dart';
 import '../../features/products/presentation/product_detail_screen.dart';
 import '../../features/sell/presentation/sell_screen.dart';
@@ -71,6 +72,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = state.pathParameters['productId']!;
           return ProductDetailScreen(productId: id);
+        },
+      ),
+      GoRoute(
+        path: '/installers/:partnerId/reserve',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final id = state.pathParameters['partnerId']!;
+          return PartnerReserveScreen(partnerId: id);
         },
       ),
       GoRoute(

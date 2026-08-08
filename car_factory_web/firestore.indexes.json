@@ -95,15 +95,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "isActive", "order": "ASCENDING" },
-        { "fieldPath": "displayOrder", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "partners",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "isFeatured", "order": "ASCENDING" },
-        { "fieldPath": "displayOrder", "order": "ASCENDING" }
+        { "fieldPath": "name", "order": "ASCENDING" }
       ]
     }
   ],

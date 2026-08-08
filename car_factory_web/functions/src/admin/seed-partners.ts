@@ -44,7 +44,6 @@ const SEED = [
     ratingAverage: 4.8,
     ratingCount: 128,
     isFeatured: true,
-    displayOrder: 1,
     isActive: true,
   },
   {
@@ -63,8 +62,7 @@ const SEED = [
       "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=800&q=80",
     ratingAverage: 0,
     ratingCount: 0,
-    isFeatured: false,
-    displayOrder: 2,
+    isFeatured: true,
     isActive: true,
   },
   {
@@ -83,8 +81,7 @@ const SEED = [
       "https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=800&q=80",
     ratingAverage: 0,
     ratingCount: 0,
-    isFeatured: false,
-    displayOrder: 3,
+    isFeatured: true,
     isActive: true,
   },
   {
@@ -103,8 +100,7 @@ const SEED = [
       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
     ratingAverage: 0,
     ratingCount: 0,
-    isFeatured: false,
-    displayOrder: 4,
+    isFeatured: true,
     isActive: true,
   },
   {
@@ -123,8 +119,7 @@ const SEED = [
       "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&q=80",
     ratingAverage: 0,
     ratingCount: 0,
-    isFeatured: false,
-    displayOrder: 5,
+    isFeatured: true,
     isActive: true,
   },
   {
@@ -143,8 +138,7 @@ const SEED = [
       "https://images.unsplash.com/photo-1625047509168-a7026f36de04?w=800&q=80",
     ratingAverage: 0,
     ratingCount: 0,
-    isFeatured: false,
-    displayOrder: 6,
+    isFeatured: true,
     isActive: true,
   },
   {
@@ -163,8 +157,7 @@ const SEED = [
       "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=800&q=80",
     ratingAverage: 0,
     ratingCount: 0,
-    isFeatured: false,
-    displayOrder: 7,
+    isFeatured: true,
     isActive: true,
   },
   {
@@ -183,8 +176,7 @@ const SEED = [
       "https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=800&q=80",
     ratingAverage: 0,
     ratingCount: 0,
-    isFeatured: false,
-    displayOrder: 8,
+    isFeatured: true,
     isActive: true,
   },
   {
@@ -203,8 +195,7 @@ const SEED = [
       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
     ratingAverage: 0,
     ratingCount: 0,
-    isFeatured: false,
-    displayOrder: 9,
+    isFeatured: true,
     isActive: true,
   },
   {
@@ -223,8 +214,7 @@ const SEED = [
       "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&q=80",
     ratingAverage: 0,
     ratingCount: 0,
-    isFeatured: false,
-    displayOrder: 10,
+    isFeatured: true,
     isActive: true,
   },
 ];

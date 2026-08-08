@@ -49,29 +49,13 @@ class PartnerShop {
 class PartnersRepository {
   PartnersRepository._();
 
-  /// 홈 카드용: isFeatured 우선, 없으면 displayOrder 최소 활성 파트너
+  /// 홈 카드: 노출(isActive)된 파트너 중 이름순 첫 번째
   static Future<PartnerShop?> fetchFeatured() async {
-    try {
-      final featured = await FirebaseBootstrap.db
-          .collection('partners')
-          .where('isFeatured', isEqualTo: true)
-          .where('isActive', isEqualTo: true)
-          .orderBy('displayOrder')
-          .limit(1)
-          .get();
-      if (featured.docs.isNotEmpty) {
-        final d = featured.docs.first;
-        return PartnerShop.fromMap(d.id, d.data());
-      }
-    } catch (e) {
-      FirebaseBootstrap.debugLog('partners featured query: $e');
-    }
-
     try {
       final snap = await FirebaseBootstrap.db
           .collection('partners')
           .where('isActive', isEqualTo: true)
-          .orderBy('displayOrder')
+          .orderBy('name')
           .limit(1)
           .get();
       if (snap.docs.isEmpty) return null;
@@ -79,7 +63,23 @@ class PartnersRepository {
       return PartnerShop.fromMap(d.id, d.data());
     } catch (e) {
       FirebaseBootstrap.debugLog('partners list query: $e');
-      return null;
+      try {
+        final snap = await FirebaseBootstrap.db
+            .collection('partners')
+            .where('isActive', isEqualTo: true)
+            .limit(20)
+            .get();
+        if (snap.docs.isEmpty) return null;
+        final docs = [...snap.docs]..sort(
+            (a, b) => (a.data()['name'] as String? ?? '')
+                .compareTo(b.data()['name'] as String? ?? ''),
+          );
+        final d = docs.first;
+        return PartnerShop.fromMap(d.id, d.data());
+      } catch (e2) {
+        FirebaseBootstrap.debugLog('partners fallback query: $e2');
+        return null;
+      }
     }
   }
 }

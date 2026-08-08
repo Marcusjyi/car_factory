@@ -35,7 +35,7 @@ export async function listInstallers(): Promise<Installer[]> {
     const snap = await getAdminDb()
       .collection("partners")
       .where("isActive", "==", true)
-      .orderBy("displayOrder", "asc")
+      .orderBy("name", "asc")
       .limit(200)
       .get();
 

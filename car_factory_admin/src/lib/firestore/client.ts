@@ -22,7 +22,7 @@ import type {
   DashboardStats,
   OrderRow,
   Partner,
-  PartnerInput,
+  PartnerWriteInput,
   Product,
   ProductStatus,
 } from "@/lib/types";
@@ -292,8 +292,6 @@ function parsePartner(id: string, data: DocumentData): Partner {
     photoPath: data.photoPath ? String(data.photoPath) : undefined,
     ratingAverage: Number(data.ratingAverage ?? 0),
     ratingCount: Number(data.ratingCount ?? 0),
-    isFeatured: data.isFeatured === true,
-    displayOrder: Number(data.displayOrder ?? 0),
     isActive: data.isActive !== false,
     createdAt: toDate(data.createdAt),
     updatedAt: toDate(data.updatedAt),
@@ -305,7 +303,7 @@ export async function listPartners(): Promise<Partner[]> {
     const snap = await getDocs(
       query(
         collection(getClientFirestore(), "partners"),
-        orderBy("displayOrder", "asc"),
+        orderBy("name", "asc"),
         limit(200),
       ),
     );
@@ -316,7 +314,7 @@ export async function listPartners(): Promise<Partner[]> {
     );
     return snap.docs
       .map((d) => parsePartner(d.id, d.data()))
-      .sort((a, b) => a.displayOrder - b.displayOrder);
+      .sort((a, b) => a.name.localeCompare(b.name, "ko"));
   }
 }
 
@@ -328,7 +326,7 @@ export async function getPartner(id: string): Promise<Partner | null> {
 
 export async function createPartner(
   id: string,
-  input: PartnerInput,
+  input: PartnerWriteInput,
 ): Promise<void> {
   const ref = doc(getClientFirestore(), "partners", id);
   const existing = await getDoc(ref);
@@ -337,6 +335,12 @@ export async function createPartner(
   }
   await setDoc(ref, {
     ...input,
+    // 별점은 대시보드에서 설정하지 않음
+    ratingAverage: 0,
+    ratingCount: 0,
+    // 하위 호환: 예전 isFeatured 쿼리와 맞춤 (노출=앱·웹 동시)
+    isFeatured: input.isActive,
+    displayOrder: 0,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -344,10 +348,22 @@ export async function createPartner(
 
 export async function updatePartner(
   id: string,
-  input: Partial<PartnerInput>,
+  input: PartnerWriteInput,
 ): Promise<void> {
   await updateDoc(doc(getClientFirestore(), "partners", id), {
-    ...input,
+    name: input.name,
+    region: input.region,
+    address: input.address,
+    phone: input.phone,
+    hours: input.hours,
+    description: input.description,
+    specialties: input.specialties,
+    specialtyLabel: input.specialtyLabel,
+    badges: input.badges,
+    photoURL: input.photoURL,
+    photoPath: input.photoPath ?? null,
+    isActive: input.isActive,
+    isFeatured: input.isActive,
     updatedAt: serverTimestamp(),
   });
 }
@@ -356,14 +372,14 @@ export async function deletePartner(id: string): Promise<void> {
   await deleteDoc(doc(getClientFirestore(), "partners", id));
 }
 
-/** 활성 + 정렬 — 스토어 목록과 동일 쿼리 (어드민 미리보기용) */
+/** 활성 파트너 — 이름순 */
 export async function listActivePartners(): Promise<Partner[]> {
   try {
     const snap = await getDocs(
       query(
         collection(getClientFirestore(), "partners"),
         where("isActive", "==", true),
-        orderBy("displayOrder", "asc"),
+        orderBy("name", "asc"),
         limit(200),
       ),
     );

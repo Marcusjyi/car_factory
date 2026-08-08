@@ -67,7 +67,7 @@ export default function PartnersPage() {
     <div className="space-y-6">
       <PageHeader
         title="파트너스"
-        description="장착 대행점 사진·주소·전문분야·뱃지를 관리합니다. 웹 /installers 와 동기화됩니다."
+        description="장착 대행점 사진·주소·전문분야·뱃지를 관리합니다. 노출은 웹·앱에 함께 적용됩니다."
         action={
           <div className="flex flex-wrap gap-2">
             <Button
@@ -107,15 +107,14 @@ export default function PartnersPage() {
                 <th className="px-4 py-3 font-medium">지점</th>
                 <th className="px-4 py-3 font-medium">주소</th>
                 <th className="px-4 py-3 font-medium">전문분야</th>
-                <th className="px-4 py-3 font-medium">상태</th>
-                <th className="px-4 py-3 font-medium">순서</th>
+                <th className="px-4 py-3 font-medium">노출</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={5}
                     className="px-4 py-8 text-center text-[#9CA3AF]"
                   >
                     불러오는 중…
@@ -124,7 +123,7 @@ export default function PartnersPage() {
               ) : filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={5}
                     className="px-4 py-8 text-center text-[#9CA3AF]"
                   >
                     등록된 파트너가 없습니다. 「초기 데이터 시드」로 시작할 수
@@ -167,18 +166,12 @@ export default function PartnersPage() {
                         : p.specialtyLabel || "-"}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {p.isActive ? (
-                          <Badge variant="success">공개</Badge>
-                        ) : (
-                          <Badge>비공개</Badge>
-                        )}
-                        {p.isFeatured ? (
-                          <Badge variant="warning">홈</Badge>
-                        ) : null}
-                      </div>
+                      {p.isActive ? (
+                        <Badge variant="success">웹·앱</Badge>
+                      ) : (
+                        <Badge>비공개</Badge>
+                      )}
                     </td>
-                    <td className="px-4 py-3 text-[#6B7280]">{p.displayOrder}</td>
                   </tr>
                 ))
               )}

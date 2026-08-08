@@ -97,13 +97,27 @@ export interface Partner {
   badges: string[];
   photoURL: string;
   photoPath?: string;
+  /** 읽기 전용 — 대시보드에서 수정하지 않음 */
   ratingAverage: number;
   ratingCount: number;
-  isFeatured: boolean;
-  displayOrder: number;
   isActive: boolean;
   createdAt: Date | null;
   updatedAt: Date | null;
 }
 
-export type PartnerInput = Omit<Partner, "id" | "createdAt" | "updatedAt">;
+/** 어드민 생성·수정 시 쓰는 필드 (별점·표시순서 제외) */
+export type PartnerWriteInput = {
+  name: string;
+  region: string;
+  address: string;
+  phone: string;
+  hours: string;
+  description: string;
+  specialties: string[];
+  specialtyLabel: string;
+  badges: string[];
+  photoURL: string;
+  photoPath?: string;
+  /** 웹·앱 동시 노출 */
+  isActive: boolean;
+};

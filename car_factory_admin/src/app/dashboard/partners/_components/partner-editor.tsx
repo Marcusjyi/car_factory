@@ -1,8 +1,15 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import {
+  type FormEvent,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { X } from "lucide-react";
 import { Card, PageHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,14 +22,7 @@ import {
   deletePartnerPhoto,
   uploadPartnerPhoto,
 } from "@/lib/partners/photo-upload";
-import type { PartnerInput } from "@/lib/types";
-
-function splitCsv(value: string): string[] {
-  return value
-    .split(/[,，、·|/]/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
+import type { PartnerWriteInput } from "@/lib/types";
 
 type FormState = {
   id: string;
@@ -32,15 +32,11 @@ type FormState = {
   phone: string;
   hours: string;
   description: string;
-  specialtiesText: string;
+  specialties: string[];
   specialtyLabel: string;
-  badgesText: string;
+  badges: string[];
   photoURL: string;
   photoPath: string;
-  ratingAverage: string;
-  ratingCount: string;
-  displayOrder: string;
-  isFeatured: boolean;
   isActive: boolean;
 };
 
@@ -52,19 +48,15 @@ const emptyForm = (): FormState => ({
   phone: "",
   hours: "",
   description: "",
-  specialtiesText: "",
+  specialties: [],
   specialtyLabel: "",
-  badgesText: "",
+  badges: [],
   photoURL: "",
   photoPath: "",
-  ratingAverage: "0",
-  ratingCount: "0",
-  displayOrder: "0",
-  isFeatured: false,
   isActive: true,
 });
 
-function toInput(form: FormState): PartnerInput {
+function toWriteInput(form: FormState): PartnerWriteInput {
   return {
     name: form.name.trim(),
     region: form.region.trim(),
@@ -72,22 +64,85 @@ function toInput(form: FormState): PartnerInput {
     phone: form.phone.trim(),
     hours: form.hours.trim(),
     description: form.description.trim(),
-    specialties: splitCsv(form.specialtiesText),
+    specialties: form.specialties,
     specialtyLabel: form.specialtyLabel.trim(),
-    badges: splitCsv(form.badgesText),
+    badges: form.badges,
     photoURL: form.photoURL.trim(),
     photoPath: form.photoPath.trim() || undefined,
-    ratingAverage: Number(form.ratingAverage) || 0,
-    ratingCount: Number(form.ratingCount) || 0,
-    displayOrder: Number(form.displayOrder) || 0,
-    isFeatured: form.isFeatured,
     isActive: form.isActive,
   };
+}
+
+function TagListEditor({
+  label,
+  values,
+  placeholder,
+  onChange,
+}: {
+  label: string;
+  values: string[];
+  placeholder: string;
+  onChange: (next: string[]) => void;
+}) {
+  const [draft, setDraft] = useState("");
+
+  function addTag() {
+    const t = draft.trim();
+    if (!t) return;
+    if (values.includes(t)) {
+      setDraft("");
+      return;
+    }
+    onChange([...values, t]);
+    setDraft("");
+  }
+
+  return (
+    <div>
+      <p className="mb-1 text-sm font-medium text-[#464646]">{label}</p>
+      <div className="mb-2 flex flex-wrap gap-2">
+        {values.length === 0 ? (
+          <span className="text-xs text-[#9CA3AF]">아직 없음</span>
+        ) : (
+          values.map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => onChange(values.filter((x) => x !== v))}
+              className="inline-flex items-center gap-1 rounded-full bg-[#F0F0F0] px-3 py-1.5 text-xs font-medium text-[#464646] transition hover:bg-[#E4E4E4]"
+            >
+              {v}
+              <X className="h-3 w-3 opacity-60" />
+            </button>
+          ))
+        )}
+      </div>
+      <div className="flex gap-2">
+        <input
+          className="min-w-0 flex-1 rounded-xl border border-[#E0E0E0] px-4 py-2.5 text-sm outline-none focus:border-[#464646]"
+          value={draft}
+          placeholder={placeholder}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addTag();
+            }
+          }}
+        />
+        <Button type="button" variant="secondary" onClick={addTag}>
+          추가
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function PartnerEditor({ partnerId }: { partnerId?: string }) {
   const router = useRouter();
   const isNew = !partnerId;
+  const fileInputId = useId();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -113,15 +168,11 @@ export function PartnerEditor({ partnerId }: { partnerId?: string }) {
           phone: p.phone,
           hours: p.hours,
           description: p.description,
-          specialtiesText: p.specialties.join(", "),
+          specialties: p.specialties,
           specialtyLabel: p.specialtyLabel,
-          badgesText: p.badges.join(", "),
+          badges: p.badges,
           photoURL: p.photoURL,
           photoPath: p.photoPath ?? "",
-          ratingAverage: String(p.ratingAverage ?? 0),
-          ratingCount: String(p.ratingCount ?? 0),
-          displayOrder: String(p.displayOrder ?? 0),
-          isFeatured: p.isFeatured,
           isActive: p.isActive,
         });
       } catch (err) {
@@ -164,6 +215,7 @@ export function PartnerEditor({ partnerId }: { partnerId?: string }) {
       setError(err instanceof Error ? err.message : "업로드 실패");
     } finally {
       setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
   }
 
@@ -172,7 +224,7 @@ export function PartnerEditor({ partnerId }: { partnerId?: string }) {
     setSaving(true);
     setError(null);
     try {
-      const input = toInput(form);
+      const input = toWriteInput(form);
       if (!input.name) throw new Error("지점명을 입력하세요.");
       if (!input.address) throw new Error("주소를 입력하세요.");
 
@@ -202,7 +254,7 @@ export function PartnerEditor({ partnerId }: { partnerId?: string }) {
     <div className="space-y-6">
       <PageHeader
         title={isNew ? "파트너 추가" : form.name || partnerId || "파트너"}
-        description="사진·주소·전문분야·뱃지 등은 웹 장착 대행점(/installers)에 반영됩니다."
+        description="노출 설정은 웹 장착 대행점과 앱에 함께 적용됩니다."
         action={
           <Link
             href="/dashboard/partners"
@@ -252,25 +304,6 @@ export function PartnerEditor({ partnerId }: { partnerId?: string }) {
               value={form.hours}
               onChange={(e) => patch("hours", e.target.value)}
             />
-            <Input
-              label="표시 순서"
-              type="number"
-              value={form.displayOrder}
-              onChange={(e) => patch("displayOrder", e.target.value)}
-            />
-            <Input
-              label="별점 평균"
-              type="number"
-              step="0.1"
-              value={form.ratingAverage}
-              onChange={(e) => patch("ratingAverage", e.target.value)}
-            />
-            <Input
-              label="별점 수"
-              type="number"
-              value={form.ratingCount}
-              onChange={(e) => patch("ratingCount", e.target.value)}
-            />
           </div>
           <Input
             label="주소"
@@ -288,35 +321,25 @@ export function PartnerEditor({ partnerId }: { partnerId?: string }) {
               onChange={(e) => patch("description", e.target.value)}
             />
           </div>
-          <div className="flex flex-wrap gap-4">
-            <label className="flex items-center gap-2 text-sm text-[#464646]">
-              <input
-                type="checkbox"
-                checked={form.isActive}
-                onChange={(e) => patch("isActive", e.target.checked)}
-              />
-              공개 (웹 목록 노출)
-            </label>
-            <label className="flex items-center gap-2 text-sm text-[#464646]">
-              <input
-                type="checkbox"
-                checked={form.isFeatured}
-                onChange={(e) => patch("isFeatured", e.target.checked)}
-              />
-              앱 홈 카드 노출
-            </label>
-          </div>
+          <label className="flex items-center gap-2 text-sm text-[#464646]">
+            <input
+              type="checkbox"
+              checked={form.isActive}
+              onChange={(e) => patch("isActive", e.target.checked)}
+            />
+            노출 (웹 · 앱 동시)
+          </label>
         </Card>
 
-        <Card className="space-y-4">
+        <Card className="space-y-5">
           <h2 className="text-sm font-semibold text-[#464646]">
             전문분야 · 뱃지
           </h2>
-          <Input
-            label="전문분야 (쉼표 구분)"
-            value={form.specialtiesText}
-            onChange={(e) => patch("specialtiesText", e.target.value)}
-            placeholder="엔진, 미션, 오버홀"
+          <TagListEditor
+            label="전문분야"
+            values={form.specialties}
+            placeholder="예: 엔진"
+            onChange={(specialties) => patch("specialties", specialties)}
           />
           <Input
             label="앱 카드 전문 문구 (한 줄)"
@@ -324,11 +347,11 @@ export function PartnerEditor({ partnerId }: { partnerId?: string }) {
             onChange={(e) => patch("specialtyLabel", e.target.value)}
             placeholder="수입차 엔진, 미션, 오버홀 전문"
           />
-          <Input
-            label="뱃지 (쉼표 구분)"
-            value={form.badgesText}
-            onChange={(e) => patch("badgesText", e.target.value)}
-            placeholder="당일 예약 가능, 보증 서비스"
+          <TagListEditor
+            label="뱃지"
+            values={form.badges}
+            placeholder="예: 당일 예약 가능"
+            onChange={(badges) => patch("badges", badges)}
           />
         </Card>
 
@@ -346,23 +369,35 @@ export function PartnerEditor({ partnerId }: { partnerId?: string }) {
               사진 없음
             </div>
           )}
-          <Input
-            label="사진 URL (직접 입력 가능)"
-            value={form.photoURL}
-            onChange={(e) => patch("photoURL", e.target.value)}
+          <input
+            id={fileInputId}
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => onPickPhoto(e.target.files?.[0] ?? null)}
           />
-          <div>
-            <label className="mb-1 block text-sm font-medium text-[#464646]">
-              파일 업로드
-            </label>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
               disabled={uploading}
-              onChange={(e) => onPickPhoto(e.target.files?.[0] ?? null)}
-            />
-            {uploading ? (
-              <p className="mt-1 text-xs text-[#9CA3AF]">업로드 중…</p>
+              onClick={() => fileRef.current?.click()}
+            >
+              {uploading ? "업로드 중…" : "사진 업로드"}
+            </Button>
+            {form.photoURL ? (
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={uploading}
+                onClick={() => {
+                  patch("photoURL", "");
+                  patch("photoPath", "");
+                }}
+              >
+                사진 제거
+              </Button>
             ) : null}
           </div>
         </Card>

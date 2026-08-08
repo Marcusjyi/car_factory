@@ -86,7 +86,7 @@ export function parsePartnerHours(raw: string): HoursState {
   }
 
   if (parts[1]) {
-    let holiday = parts[1]
+    const holiday = parts[1]
       .replace(/^휴일·공휴일\s*/, "")
       .replace(/^토\s*/, "")
       .replace(/^일\s*/, "")

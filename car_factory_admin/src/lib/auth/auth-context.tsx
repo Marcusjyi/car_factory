@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -98,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsub();
   }, []);
 
-  async function login(email: string, password: string) {
+  const login = useCallback(async (email: string, password: string) => {
     setError(null);
     const cred = await signInWithEmailAndPassword(
       getClientAuth(),
@@ -114,22 +115,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signOut(getClientAuth());
       throw err;
     }
-  }
+  }, []);
 
-  async function logout() {
+  const logout = useCallback(async () => {
     await signOut(getClientAuth());
     setUser(null);
     setAdminUser(null);
-  }
+  }, []);
 
-  async function getIdToken() {
+  const getIdToken = useCallback(async () => {
     if (!user) return null;
     return user.getIdToken();
-  }
+  }, [user]);
 
   const value = useMemo(
     () => ({ user, adminUser, loading, error, login, logout, getIdToken }),
-    [user, adminUser, loading, error],
+    [user, adminUser, loading, error, login, logout, getIdToken],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

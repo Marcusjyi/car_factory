@@ -31,6 +31,11 @@ export default async function InstallersPage() {
           </p>
         </section>
 
+        {shops.length === 0 ? (
+          <p className="rounded-2xl border border-border bg-white px-5 py-10 text-center text-sm text-text-muted">
+            등록된 장착 대행점이 없습니다.
+          </p>
+        ) : (
         <ul className="grid gap-5 md:grid-cols-2">
           {shops.map((shop) => (
             <li key={shop.id}>
@@ -97,6 +102,7 @@ export default async function InstallersPage() {
             </li>
           ))}
         </ul>
+        )}
 
         <p className="mt-8 text-center text-sm text-text-muted">
           장착 대행점 제휴 문의는{" "}

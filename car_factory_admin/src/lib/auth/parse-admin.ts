@@ -13,6 +13,7 @@ export function parseAdminDoc(
     email: String(data.email ?? ""),
     displayName: String(data.displayName ?? ""),
     employeeId: data.employeeId ? String(data.employeeId) : undefined,
+    phoneNumber: data.phoneNumber ? String(data.phoneNumber) : undefined,
     isApproved: data.isApproved === true,
     role: role as AdminRole,
     createdAt: toDate(data.createdAt),

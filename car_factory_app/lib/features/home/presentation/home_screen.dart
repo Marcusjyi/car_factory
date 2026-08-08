@@ -193,9 +193,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     builder: (context, ref, _) {
                       final partnerAsync = ref.watch(_featuredPartnerProvider);
                       return partnerAsync.when(
-                        data: (partner) => _ShopCard(partner: partner),
-                        loading: () => const _ShopCard(partner: null),
-                        error: (_, _) => const _ShopCard(partner: null),
+                        data: (partner) => partner == null
+                            ? const SizedBox.shrink()
+                            : _ShopCard(partner: partner),
+                        loading: () => const _ShopCardSkeleton(),
+                        error: (_, _) => const SizedBox.shrink(),
                       );
                     },
                   ),
@@ -486,10 +488,11 @@ class _ShopBannerImage extends StatelessWidget {
   }
 }
 
+/// 장착점 카드 — Firestore 데이터만 표시 (시드 폴백 없음)
 class _ShopCard extends StatelessWidget {
-  const _ShopCard({this.partner});
+  const _ShopCard({required this.partner});
 
-  final PartnerShop? partner;
+  final PartnerShop partner;
 
   /// 카드 고정 높이 — 사진도 동일 변의 1:1
   static const double _cardHeight = 132;
@@ -501,21 +504,15 @@ class _ShopCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cf = context.cf;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final name = partner?.name.trim().isNotEmpty == true
-        ? partner!.name
-        : '카팩토리 김포점 (본점)';
-    final specialty = partner?.specialtyLabel.trim().isNotEmpty == true
-        ? partner!.specialtyLabel
-        : '수입차 엔진, 미션, 오버홀 전문';
-    final address = partner?.address.trim().isNotEmpty == true
-        ? partner!.address
-        : '경기도 김포시 통진읍 월하로 120';
-    final badges = partner?.badges.isNotEmpty == true
-        ? partner!.badges
-        : const ['당일 예약 가능', '보증 서비스'];
-    final ratingAvg = partner?.ratingAverage ?? 4.8;
-    final ratingCount = partner?.ratingCount ?? 128;
-    final photoURL = partner?.photoURL.trim() ?? '';
+    final name = partner.name.trim().isNotEmpty
+        ? partner.name
+        : '장착점';
+    final specialty = partner.specialtyLabel.trim();
+    final address = partner.address.trim();
+    final badges = partner.badges;
+    final ratingAvg = partner.ratingAverage;
+    final ratingCount = partner.ratingCount;
+    final photoURL = partner.photoURL.trim();
     final ratingText = ratingCount > 0
         ? '${ratingAvg.toStringAsFixed(1)} ($ratingCount)'
         : ratingAvg > 0
@@ -630,26 +627,30 @@ class _ShopCard extends StatelessWidget {
                           ],
                         ),
                       ],
-                      const SizedBox(height: 3),
-                      Text(
-                        specialty,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: cf.textSecondary,
+                      if (specialty.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          specialty,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: cf.textSecondary,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        address,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: cf.textSecondary,
+                      ],
+                      if (address.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          address,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: cf.textSecondary,
+                          ),
                         ),
-                      ),
+                      ],
                       if (badges.isNotEmpty) ...[
                         const SizedBox(height: 6),
                         SingleChildScrollView(
@@ -666,6 +667,76 @@ class _ShopCard extends StatelessWidget {
                       ],
                     ],
                   ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ShopCardSkeleton extends StatelessWidget {
+  const _ShopCardSkeleton();
+
+  static const double _cardHeight = 132;
+
+  @override
+  Widget build(BuildContext context) {
+    final cf = context.cf;
+    return Material(
+      color: cf.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: cf.divider),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        height: _cardHeight,
+        width: double.infinity,
+        child: Row(
+          children: [
+            ColoredBox(
+              color: cf.surfaceVariant,
+              child: const SizedBox(
+                width: _cardHeight,
+                height: _cardHeight,
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 14,
+                      width: 140,
+                      decoration: BoxDecoration(
+                        color: cf.surfaceVariant,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      height: 12,
+                      width: 180,
+                      decoration: BoxDecoration(
+                        color: cf.surfaceVariant,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 12,
+                      width: 120,
+                      decoration: BoxDecoration(
+                        color: cf.surfaceVariant,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

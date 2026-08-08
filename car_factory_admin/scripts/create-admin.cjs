@@ -2,7 +2,10 @@
  * Firebase Admin CLI — Auth + Firestore admins/{uid}
  *
  *   cd car_factory_admin
- *   npm run create-admin -- <email> <password> [displayName] [employeeId] [role]
+ *   npm run create-admin -- <email> <password> [displayName] [employeeId] [role] [phone]
+ *
+ * phone 예: 01059570807 또는 +821059570807
+ *   → Firestore admins.phoneNumber (+82…) + Auth phoneNumber
  *
  * 인증 (하나):
  *   1) car_factory_admin/.env.local 또는 ../car_factory_web/.env.local
@@ -49,8 +52,27 @@ loadEnvFile(resolve(STORE, ".env.local"));
 const EMAIL = (process.argv[2] || "").trim().toLowerCase();
 const PASSWORD = process.argv[3];
 const DISPLAY_NAME = process.argv[4] || "Admin";
-const EMPLOYEE_ID = process.argv[5] || "";
-const ROLE = process.argv[6] === "admin" ? "admin" : "super_admin";
+const EMPLOYEE_ID = (process.argv[5] || "").trim();
+const ROLE_RAW = (process.argv[6] || "").trim();
+const PHONE_RAW = (process.argv[7] || "").trim();
+
+/** role 미입력 시 super_admin. phone 넣을 때 role 자리도 채울 것. */
+const ROLE = ROLE_RAW === "admin" ? "admin" : "super_admin";
+
+function toE164Kr(phone) {
+  if (!phone) return "";
+  const digits = String(phone).replace(/\D/g, "");
+  if (String(phone).trim().startsWith("+") && digits.length >= 10) {
+    return `+${digits}`;
+  }
+  if (digits.startsWith("82") && digits.length >= 11) return `+${digits}`;
+  if (digits.startsWith("0") && digits.length >= 10 && digits.length <= 11) {
+    return `+82${digits.slice(1)}`;
+  }
+  return "";
+}
+
+const PHONE = toE164Kr(PHONE_RAW);
 
 const PROJECT_ID =
   process.env.FIREBASE_PROJECT_ID ||
@@ -62,18 +84,40 @@ const DATABASE_ID =
   process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID ||
   "default";
 
+function printUsage() {
+  console.error(
+    "Usage:\n  npm run create-admin -- <email> <password> [displayName] [employeeId] [role] [phone]",
+  );
+  console.error(
+    'Example:\n  npm run create-admin -- admin@example.com "secret12" "Marcus" "000001" super_admin "01059570807"',
+  );
+  console.error(
+    "Args: email password [displayName] [employeeId] [admin|super_admin] [phone]",
+  );
+}
+
 if (!EMAIL || !PASSWORD) {
-  console.error(
-    "Usage:\n  npm run create-admin -- <email> <password> [displayName] [employeeId] [role]",
-  );
-  console.error(
-    'Example:\n  npm run create-admin -- admin@example.com "secret12" "Marcus" "000001" super_admin',
-  );
+  printUsage();
   process.exit(1);
 }
 
 if (PASSWORD.length < 6) {
   console.error("password must be at least 6 characters");
+  process.exit(1);
+}
+
+if (ROLE_RAW && ROLE_RAW !== "admin" && ROLE_RAW !== "super_admin") {
+  console.error('role must be "admin" or "super_admin" (got: ' + ROLE_RAW + ")");
+  printUsage();
+  process.exit(1);
+}
+
+if (PHONE_RAW && !PHONE) {
+  console.error(
+    "phone format invalid. Use 010xxxxxxxx or +8210xxxxxxxx (got: " +
+      PHONE_RAW +
+      ")",
+  );
   process.exit(1);
 }
 
@@ -112,9 +156,13 @@ function initAdmin() {
   if (!sa) {
     console.error("Firebase Admin credential missing.");
     console.error("Put one of:");
-    console.error("  - car_factory_admin/.env.local  FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY");
+    console.error(
+      "  - car_factory_admin/.env.local  FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY",
+    );
     console.error("  - car_factory_web/.env.local     same keys");
-    console.error("  - service-account.json in car_factory_admin/ or car_factory_web/");
+    console.error(
+      "  - service-account.json in car_factory_admin/ or car_factory_web/",
+    );
     process.exit(1);
   }
 
@@ -157,13 +205,37 @@ async function main() {
     updatedAt: FieldValue.serverTimestamp(),
   };
   if (EMPLOYEE_ID) payload.employeeId = EMPLOYEE_ID;
+  if (PHONE) payload.phoneNumber = PHONE;
 
   const ref = db.collection("admins").doc(user.uid);
   const existing = await ref.get();
   if (!existing.exists) payload.createdAt = FieldValue.serverTimestamp();
   await ref.set(payload, {merge: true});
 
+  if (PHONE) {
+    try {
+      await auth.updateUser(user.uid, {phoneNumber: PHONE});
+      console.log("Auth phoneNumber set:", PHONE);
+    } catch (err) {
+      console.warn(
+        "Auth phoneNumber 설정 실패(콘솔에서 Phone 로그인 활성화·번호 중복 확인):",
+        err.message || err,
+      );
+      console.warn(
+        "Firestore admins.phoneNumber 는 저장됨. Auth 연동은 Console에서 확인하세요.",
+      );
+    }
+  } else {
+    console.log("phone omitted — Firestore/Auth phoneNumber not set");
+  }
+
+  await auth.setCustomUserClaims(user.uid, {
+    admin: true,
+    role: ROLE,
+  });
+
   console.log("Firestore saved: admins/" + user.uid + " (db=" + DATABASE_ID + ")");
+  console.log("Custom claims set: admin=true, role=" + ROLE);
   console.log(
     JSON.stringify(
       {
@@ -171,6 +243,7 @@ async function main() {
         email: EMAIL,
         displayName: DISPLAY_NAME,
         employeeId: EMPLOYEE_ID || null,
+        phoneNumber: PHONE || null,
         role: ROLE,
         isApproved: true,
       },

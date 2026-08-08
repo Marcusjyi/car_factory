@@ -77,11 +77,11 @@ export function DashboardSidebar() {
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-white">
-      <div className="hidden lg:block">
+    <div className="min-h-screen bg-white">
+      <div className="fixed inset-y-0 left-0 z-40 hidden w-64 lg:block">
         <DashboardSidebar />
       </div>
-      <main className="flex-1 overflow-auto">
+      <main className="min-h-screen lg:pl-64">
         <div className="border-b border-[#E0E0E0] px-4 py-4 lg:hidden">
           <p className="text-sm font-semibold text-[#464646]">
             CARFACTORY 관리자

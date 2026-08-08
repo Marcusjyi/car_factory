@@ -14,6 +14,7 @@
 | `email` | string | O | 로그인 이메일 (소문자) |
 | `displayName` | string | O | 표시 이름 |
 | `employeeId` | string | X | 사번 |
+| `phoneNumber` | string | X | 휴대폰 E.164 (`+8210…`) — 삭제 시 SMS 인증 |
 | `isApproved` | boolean | O | `true`여야 어드민 로그인 가능 |
 | `role` | `"admin"` \| `"super_admin"` | O | 권한 |
 | `createdAt` | timestamp | O | 생성 |
@@ -38,17 +39,18 @@ Firebase Console → Authentication → **Email/Password** 활성화.
 
 ```bash
 cd car_factory_admin
-npm run create-admin -- admin@example.com "<password>" "Marcus" "000001" super_admin
+npm run create-admin -- admin@example.com "<password>" "Marcus" "000001" super_admin "01059570807"
 ```
 
 인자:
 
 ```text
-<email> <password> [displayName] [employeeId] [role]
+<email> <password> [displayName] [employeeId] [role] [phone]
 ```
 
 - `role` 생략 또는 `super_admin` → super_admin
 - `role` = `admin` → admin
+- `phone` 예: `01059570807` → Firestore/Auth에 `+821059570807` 저장
 
 ## 로그인
 

@@ -3,3 +3,108 @@
 body {
   font-family: system-ui, -apple-system, sans-serif;
 }
+
+.cf-wheel {
+  --wheel-item-h: 40px;
+  --wheel-visible: 5;
+  position: relative;
+  height: calc(var(--wheel-item-h) * var(--wheel-visible));
+  min-width: 64px;
+  flex: 1 1 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #f7f7f7;
+  touch-action: none;
+  user-select: none;
+}
+
+.cf-wheel::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset-inline: 4px;
+  top: 50%;
+  height: var(--wheel-item-h);
+  translate: 0 -50%;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 0 1px #ececec;
+  z-index: 1;
+}
+
+.cf-wheel::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: linear-gradient(
+    180deg,
+    rgb(247 247 247 / 92%) 0%,
+    rgb(247 247 247 / 0%) 28%,
+    rgb(247 247 247 / 0%) 72%,
+    rgb(247 247 247 / 92%) 100%
+  );
+}
+
+.cf-wheel-scroll {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-block: calc(var(--wheel-item-h) * 2);
+  cursor: grab;
+  position: relative;
+  z-index: 3;
+}
+
+.cf-wheel-scroll:active {
+  cursor: grabbing;
+}
+
+.cf-wheel-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.cf-wheel-item {
+  height: var(--wheel-item-h);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: #b0b0b0;
+  transition: color 120ms ease;
+}
+
+.cf-wheel-item[data-active="true"] {
+  color: #222;
+  font-weight: 700;
+}
+
+.cf-wheel-range {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cf-wheel-colon,
+.cf-wheel-dash {
+  flex: 0 0 auto;
+  width: 12px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #464646;
+  line-height: 1;
+}
+
+.cf-wheel-dash {
+  width: 16px;
+  opacity: 0.55;
+}

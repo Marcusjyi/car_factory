@@ -36,4 +36,5 @@ export {
   revokeAdminAccess,
 } from "./admin/set-role.js";
 
-export {seedPartners} from "./admin/seed-partners.js";
+export {deletePartner} from "./admin/delete-partner.js";
+export {setMyAdminPhone} from "./admin/set-admin-phone.js";

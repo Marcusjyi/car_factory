@@ -1,11 +1,17 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 
 const FIRESTORE_DATABASE_ID =
   process.env.FIRESTORE_DATABASE_ID ||
   process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID ||
   "default";
+
+const STORAGE_BUCKET =
+  process.env.FIREBASE_STORAGE_BUCKET ||
+  process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
+  "car-factory-40a14.firebasestorage.app";
 
 function initAdmin() {
   if (getApps().length) {
@@ -22,6 +28,7 @@ function initAdmin() {
     return initializeApp({
       credential: cert(JSON.parse(serviceAccount)),
       projectId,
+      storageBucket: STORAGE_BUCKET,
     });
   }
 
@@ -31,10 +38,11 @@ function initAdmin() {
     return initializeApp({
       credential: cert({ projectId, clientEmail, privateKey }),
       projectId,
+      storageBucket: STORAGE_BUCKET,
     });
   }
 
-  return initializeApp({ projectId });
+  return initializeApp({ projectId, storageBucket: STORAGE_BUCKET });
 }
 
 export function getAdminFirestore() {
@@ -45,4 +53,9 @@ export function getAdminFirestore() {
 export function getAdminAuth() {
   initAdmin();
   return getAuth();
+}
+
+export function getAdminBucket() {
+  initAdmin();
+  return getStorage().bucket(STORAGE_BUCKET);
 }

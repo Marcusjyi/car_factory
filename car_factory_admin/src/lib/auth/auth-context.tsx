@@ -71,6 +71,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         try {
           const admin = await resolveAdminUser(firebaseUser);
+          // Refresh token so Storage rules can read admin custom claims.
+          await firebaseUser.getIdToken(true);
           setUser(firebaseUser);
           setAdminUser(admin);
           setError(null);
@@ -105,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
     try {
       const admin = await resolveAdminUser(cred.user);
+      await cred.user.getIdToken(true);
       setUser(cred.user);
       setAdminUser(admin);
     } catch (err) {

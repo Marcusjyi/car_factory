@@ -1,7 +1,11 @@
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { getStorage } from "firebase/storage";
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import {
+  browserLocalPersistence,
+  getAuth,
+  initializeAuth,
+} from "firebase/auth";
 import { getFirestore, initializeFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -35,8 +39,18 @@ export function getFirebaseApp() {
   return getApp();
 }
 
+/**
+ * localStorage 지속성 사용.
+ * firebase 12.17+ IndexedDB는 탭이 hidden이면 "Database is closing/hidden"를 던짐
+ * (reCAPTCHA/팝업 포커스 시). Phone Auth·재인증에 영향.
+ */
 export function getClientAuth() {
-  return getAuth(getFirebaseApp());
+  const app = getFirebaseApp();
+  try {
+    return initializeAuth(app, { persistence: browserLocalPersistence });
+  } catch {
+    return getAuth(app);
+  }
 }
 
 export function getClientFirestore() {
@@ -60,8 +74,23 @@ export function getClientFunctions() {
   return getFunctions(getFirebaseApp(), FUNCTIONS_REGION);
 }
 
-export async function callSeedPartners(): Promise<{ ok: boolean; count: number }> {
-  const fn = httpsCallable(getClientFunctions(), "seedPartners");
-  const res = await fn({});
-  return res.data as { ok: boolean; count: number };
+export async function callDeletePartner(
+  partnerId: string,
+  employeeId: string,
+): Promise<{ ok: boolean; partnerId: string }> {
+  const fn = httpsCallable(getClientFunctions(), "deletePartner");
+  const res = await fn({ partnerId, employeeId });
+  return res.data as { ok: boolean; partnerId: string };
+}
+
+export async function callSetMyAdminPhone(
+  phoneNumber: string,
+): Promise<{ ok: boolean; phoneNumber: string; authUpdated: boolean }> {
+  const fn = httpsCallable(getClientFunctions(), "setMyAdminPhone");
+  const res = await fn({ phoneNumber });
+  return res.data as {
+    ok: boolean;
+    phoneNumber: string;
+    authUpdated: boolean;
+  };
 }

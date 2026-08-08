@@ -5,6 +5,8 @@ export interface AdminUser {
   email: string;
   displayName: string;
   employeeId?: string;
+  /** E.164 또는 국내 형식 — 삭제 시 Firebase Phone Auth OTP */
+  phoneNumber?: string;
   isApproved: boolean;
   role: AdminRole;
   createdAt: Date | null;

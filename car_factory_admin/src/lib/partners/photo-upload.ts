@@ -4,7 +4,7 @@ import {
   ref,
   uploadBytes,
 } from "firebase/storage";
-import { getClientStorage } from "@/lib/firebase/config";
+import { getClientAuth, getClientStorage } from "@/lib/firebase/config";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
@@ -18,13 +18,34 @@ export function validatePartnerImageFile(file: File) {
   }
 }
 
+async function ensureAdminClaims() {
+  const user = getClientAuth().currentUser;
+  if (!user) throw new Error("로그인이 필요합니다.");
+  try {
+    const token = await user.getIdToken();
+    await fetch("/api/auth/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    await user.getIdToken(true);
+  } catch {
+    // 서비스 계정 없어도 Storage password 폴백으로 업로드 가능
+  }
+  return user;
+}
+
 export async function uploadPartnerPhoto(
   partnerId: string,
   file: File,
 ): Promise<{ photoURL: string; photoPath: string }> {
   validatePartnerImageFile(file);
+  await ensureAdminClaims();
+
   const ext =
-    file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+    file.type === "image/png"
+      ? "png"
+      : file.type === "image/webp"
+        ? "webp"
+        : "jpg";
   const photoPath = `partner-images/${partnerId}/${Date.now()}.${ext}`;
   const storageRef = ref(getClientStorage(), photoPath);
   await uploadBytes(storageRef, file, {

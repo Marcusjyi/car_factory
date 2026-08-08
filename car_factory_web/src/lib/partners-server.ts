@@ -3,7 +3,6 @@ import "server-only";
 import type { DocumentData } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import type { Installer } from "@/lib/installers-types";
-import { FALLBACK_INSTALLERS } from "@/lib/installers-fallback";
 
 function mapDoc(id: string, data: DocumentData): Installer | null {
   if (data.isActive === false) return null;
@@ -30,6 +29,7 @@ function mapDoc(id: string, data: DocumentData): Installer | null {
   };
 }
 
+/** Firestore `partners`만 사용. 삭제된 문서는 목록에 나오지 않음. */
 export async function listInstallers(): Promise<Installer[]> {
   try {
     const snap = await getAdminDb()
@@ -39,15 +39,12 @@ export async function listInstallers(): Promise<Installer[]> {
       .limit(200)
       .get();
 
-    if (snap.empty) return FALLBACK_INSTALLERS;
-
-    const rows = snap.docs
+    return snap.docs
       .map((d) => mapDoc(d.id, d.data()))
       .filter((x): x is Installer => x != null && Boolean(x.name));
-    return rows.length ? rows : FALLBACK_INSTALLERS;
   } catch (err) {
     console.error("[partners] listInstallers failed", err);
-    return FALLBACK_INSTALLERS;
+    return [];
   }
 }
 
@@ -56,12 +53,10 @@ export async function getInstallerById(
 ): Promise<Installer | null> {
   try {
     const snap = await getAdminDb().collection("partners").doc(id).get();
-    if (snap.exists) {
-      const mapped = mapDoc(snap.id, snap.data() ?? {});
-      if (mapped) return mapped;
-    }
+    if (!snap.exists) return null;
+    return mapDoc(snap.id, snap.data() ?? {});
   } catch (err) {
     console.error("[partners] getInstallerById failed", err);
+    return null;
   }
-  return FALLBACK_INSTALLERS.find((s) => s.id === id) ?? null;
 }

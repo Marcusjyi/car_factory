@@ -4,15 +4,17 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Clock, MapPin, Phone, Wrench } from "lucide-react";
 import { SiteHeader, Breadcrumbs } from "@/components/layout/SiteHeader";
 import { FeatureBar } from "@/components/layout/FeatureBar";
-import { getInstallerById } from "@/lib/installers";
+import { getInstallerById } from "@/lib/partners-server";
 
 type PageProps = {
   params: Promise<{ installerId: string }>;
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function InstallerReservePage({ params }: PageProps) {
   const { installerId } = await params;
-  const shop = getInstallerById(installerId);
+  const shop = await getInstallerById(installerId);
   if (!shop) notFound();
 
   return (

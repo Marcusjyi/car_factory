@@ -1,11 +1,15 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
   limit,
   orderBy,
   query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
   where,
   type DocumentData,
 } from "firebase/firestore";
@@ -17,6 +21,8 @@ import type {
   AppUser,
   DashboardStats,
   OrderRow,
+  Partner,
+  PartnerInput,
   Product,
   ProductStatus,
 } from "@/lib/types";
@@ -266,4 +272,104 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     reservedProducts,
     soldProducts,
   };
+}
+
+function parsePartner(id: string, data: DocumentData): Partner {
+  return {
+    id,
+    name: String(data.name ?? ""),
+    region: String(data.region ?? ""),
+    address: String(data.address ?? ""),
+    phone: String(data.phone ?? ""),
+    hours: String(data.hours ?? ""),
+    description: String(data.description ?? ""),
+    specialties: Array.isArray(data.specialties)
+      ? data.specialties.map(String)
+      : [],
+    specialtyLabel: String(data.specialtyLabel ?? ""),
+    badges: Array.isArray(data.badges) ? data.badges.map(String) : [],
+    photoURL: String(data.photoURL ?? ""),
+    photoPath: data.photoPath ? String(data.photoPath) : undefined,
+    ratingAverage: Number(data.ratingAverage ?? 0),
+    ratingCount: Number(data.ratingCount ?? 0),
+    isFeatured: data.isFeatured === true,
+    displayOrder: Number(data.displayOrder ?? 0),
+    isActive: data.isActive !== false,
+    createdAt: toDate(data.createdAt),
+    updatedAt: toDate(data.updatedAt),
+  };
+}
+
+export async function listPartners(): Promise<Partner[]> {
+  try {
+    const snap = await getDocs(
+      query(
+        collection(getClientFirestore(), "partners"),
+        orderBy("displayOrder", "asc"),
+        limit(200),
+      ),
+    );
+    return snap.docs.map((d) => parsePartner(d.id, d.data()));
+  } catch {
+    const snap = await getDocs(
+      query(collection(getClientFirestore(), "partners"), limit(200)),
+    );
+    return snap.docs
+      .map((d) => parsePartner(d.id, d.data()))
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+  }
+}
+
+export async function getPartner(id: string): Promise<Partner | null> {
+  const snap = await getDoc(doc(getClientFirestore(), "partners", id));
+  if (!snap.exists()) return null;
+  return parsePartner(snap.id, snap.data());
+}
+
+export async function createPartner(
+  id: string,
+  input: PartnerInput,
+): Promise<void> {
+  const ref = doc(getClientFirestore(), "partners", id);
+  const existing = await getDoc(ref);
+  if (existing.exists()) {
+    throw new Error("이미 존재하는 파트너 ID입니다.");
+  }
+  await setDoc(ref, {
+    ...input,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function updatePartner(
+  id: string,
+  input: Partial<PartnerInput>,
+): Promise<void> {
+  await updateDoc(doc(getClientFirestore(), "partners", id), {
+    ...input,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deletePartner(id: string): Promise<void> {
+  await deleteDoc(doc(getClientFirestore(), "partners", id));
+}
+
+/** 활성 + 정렬 — 스토어 목록과 동일 쿼리 (어드민 미리보기용) */
+export async function listActivePartners(): Promise<Partner[]> {
+  try {
+    const snap = await getDocs(
+      query(
+        collection(getClientFirestore(), "partners"),
+        where("isActive", "==", true),
+        orderBy("displayOrder", "asc"),
+        limit(200),
+      ),
+    );
+    return snap.docs.map((d) => parsePartner(d.id, d.data()));
+  } catch {
+    const all = await listPartners();
+    return all.filter((p) => p.isActive);
+  }
 }

@@ -384,8 +384,9 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
               child: Container(
                 height: 60,
                 decoration: BoxDecoration(
-                  color: cf.surfaceVariant,
+                  color: cf.surface,
                   borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: cf.divider),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,

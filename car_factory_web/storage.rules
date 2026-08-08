@@ -5,6 +5,13 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    function isAdmin() {
+      return signedIn()
+        && firestore.exists(/databases/default/documents/admins/$(request.auth.uid))
+        && firestore.get(/databases/default/documents/admins/$(request.auth.uid)).data.isApproved == true
+        && firestore.get(/databases/default/documents/admins/$(request.auth.uid)).data.role in ['admin', 'super_admin'];
+    }
+
     function validImage() {
       return request.resource.size < 10 * 1024 * 1024
         && request.resource.contentType.matches('image/(jpeg|png|webp)');
@@ -24,6 +31,12 @@ service firebase.storage {
         && request.auth.uid == uid
         && validImage();
       allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /partner-images/{partnerId}/{fileName} {
+      allow read: if true;
+      allow create, update: if isAdmin() && validImage();
+      allow delete: if isAdmin();
     }
 
     match /chat-images/{roomId}/{fileName} {

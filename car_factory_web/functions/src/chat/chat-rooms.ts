@@ -1,5 +1,6 @@
 import {getApp, getApps, initializeApp} from "firebase-admin/app";
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
+import {getMessaging} from "firebase-admin/messaging";
 import {logger} from "firebase-functions";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
 import {onDocumentCreated} from "firebase-functions/v2/firestore";
@@ -55,6 +56,86 @@ async function adjustChatUnreadTotal(uid: string, delta: number) {
     },
     {merge: true},
   );
+}
+
+/** 상대방 디바이스로 채팅 푸시 발송. 실패해도 메시지 처리는 유지. */
+async function sendChatPush(params: {
+  peerUid: string;
+  roomId: string;
+  title: string;
+  body: string;
+}) {
+  const {peerUid, roomId, title, body} = params;
+  if (!peerUid) return;
+
+  try {
+    const tokensSnap = await db()
+      .collection("users")
+      .doc(peerUid)
+      .collection("fcmTokens")
+      .get();
+    const tokenDocs = tokensSnap.docs.filter((d) => {
+      const t = String(d.data()?.token ?? "").trim();
+      return t.length > 0;
+    });
+    if (tokenDocs.length === 0) {
+      logger.info("sendChatPush: no tokens", {peerUid, roomId});
+      return;
+    }
+
+    const tokens = tokenDocs.map((d) => String(d.data().token).trim());
+    const messaging = getMessaging();
+    const result = await messaging.sendEachForMulticast({
+      tokens,
+      notification: {title, body},
+      data: {
+        type: "chat",
+        roomId,
+      },
+      android: {
+        priority: "high",
+        notification: {
+          channelId: "car_factory_chat",
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: "default",
+            badge: 1,
+          },
+        },
+      },
+    });
+
+    const deletes: Promise<unknown>[] = [];
+    result.responses.forEach((res, i) => {
+      if (res.success) return;
+      const code = res.error?.code ?? "";
+      logger.warn("sendChatPush failed", {
+        peerUid,
+        code,
+        message: res.error?.message,
+      });
+      if (
+        code === "messaging/invalid-registration-token" ||
+        code === "messaging/registration-token-not-registered"
+      ) {
+        deletes.push(tokenDocs[i].ref.delete());
+      }
+    });
+    if (deletes.length > 0) {
+      await Promise.all(deletes);
+    }
+    logger.info("sendChatPush", {
+      peerUid,
+      roomId,
+      successCount: result.successCount,
+      failureCount: result.failureCount,
+    });
+  } catch (err) {
+    logger.error("sendChatPush error", {peerUid, roomId, err});
+  }
 }
 
 async function assertCompletedOrder(
@@ -427,6 +508,19 @@ export const onMessageCreated = onDocumentCreated(
       tasks.push(adjustChatUnreadTotal(senderUid, -prevSenderUnread));
     }
     await Promise.all(tasks);
+
+    if (peerUid) {
+      const senderName =
+        senderUid === String(room.buyerUid) ?
+          String(room.buyerDisplayName || "구매자") :
+          String(room.sellerDisplayName || "판매자");
+      await sendChatPush({
+        peerUid,
+        roomId,
+        title: senderName,
+        body: preview,
+      });
+    }
 
     logger.info("onMessageCreated", {roomId, senderUid, peerUid});
   },

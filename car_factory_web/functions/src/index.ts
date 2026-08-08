@@ -35,3 +35,5 @@ export {
   setAdminRole,
   revokeAdminAccess,
 } from "./admin/set-role.js";
+
+export {seedPartners} from "./admin/seed-partners.js";

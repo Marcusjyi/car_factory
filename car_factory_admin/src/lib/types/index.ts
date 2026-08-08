@@ -82,3 +82,28 @@ export interface DashboardStats {
   reservedProducts: number;
   soldProducts: number;
 }
+
+/** 장착 파트너스 (partners) */
+export interface Partner {
+  id: string;
+  name: string;
+  region: string;
+  address: string;
+  phone: string;
+  hours: string;
+  description: string;
+  specialties: string[];
+  specialtyLabel: string;
+  badges: string[];
+  photoURL: string;
+  photoPath?: string;
+  ratingAverage: number;
+  ratingCount: number;
+  isFeatured: boolean;
+  displayOrder: number;
+  isActive: boolean;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+}
+
+export type PartnerInput = Omit<Partner, "id" | "createdAt" | "updatedAt">;

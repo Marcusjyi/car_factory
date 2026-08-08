@@ -1,3 +1,5 @@
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { getStorage } from "firebase/storage";
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, initializeFirestore } from "firebase/firestore";
@@ -13,6 +15,9 @@ const firebaseConfig = {
 
 const FIRESTORE_DATABASE_ID =
   process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID || "default";
+
+const FUNCTIONS_REGION =
+  process.env.NEXT_PUBLIC_FUNCTIONS_REGION || "asia-northeast3";
 
 function assertFirebaseConfig() {
   if (!firebaseConfig.apiKey || !firebaseConfig.projectId || !firebaseConfig.appId) {
@@ -45,4 +50,18 @@ export function getClientFirestore() {
   } catch {
     return getFirestore(app, FIRESTORE_DATABASE_ID);
   }
+}
+
+export function getClientStorage() {
+  return getStorage(getFirebaseApp());
+}
+
+export function getClientFunctions() {
+  return getFunctions(getFirebaseApp(), FUNCTIONS_REGION);
+}
+
+export async function callSeedPartners(): Promise<{ ok: boolean; count: number }> {
+  const fn = httpsCallable(getClientFunctions(), "seedPartners");
+  const res = await fn({});
+  return res.data as { ok: boolean; count: number };
 }

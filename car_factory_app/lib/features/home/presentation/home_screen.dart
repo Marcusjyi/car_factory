@@ -1,8 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/partners/partners_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/models/product.dart';
 import '../../../shared/widgets/cf_header.dart';
@@ -13,6 +15,10 @@ final _homeProductsProvider = FutureProvider<List<ProductPublicDto>>((ref) {
   return ProductRepository().listProducts(
     const ProductSearchFilter(limit: 12),
   );
+});
+
+final _featuredPartnerProvider = FutureProvider<PartnerShop?>((ref) {
+  return PartnersRepository.fetchFeatured();
 });
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -61,7 +67,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
-          onRefresh: () async => ref.invalidate(_homeProductsProvider),
+          onRefresh: () async {
+            ref.invalidate(_homeProductsProvider);
+            ref.invalidate(_featuredPartnerProvider);
+          },
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
@@ -177,10 +186,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: _ShopCard(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final partnerAsync = ref.watch(_featuredPartnerProvider);
+                      return partnerAsync.when(
+                        data: (partner) => _ShopCard(partner: partner),
+                        loading: () => const _ShopCard(partner: null),
+                        error: (_, _) => const _ShopCard(partner: null),
+                      );
+                    },
+                  ),
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
@@ -469,104 +487,190 @@ class _ShopBannerImage extends StatelessWidget {
 }
 
 class _ShopCard extends StatelessWidget {
-  const _ShopCard();
+  const _ShopCard({this.partner});
+
+  final PartnerShop? partner;
+
+  /// 카드 고정 높이 — 사진도 동일 변의 1:1
+  static const double _cardHeight = 132;
+
+  static const _darkAsset = 'assets/shops/uijeongbu.png';
+  static const _lightAsset = 'assets/shops/uijeongbu_light.png';
 
   @override
   Widget build(BuildContext context) {
     final cf = context.cf;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cf.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cf.divider),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final name = partner?.name.trim().isNotEmpty == true
+        ? partner!.name
+        : '카팩토리 김포점 (본점)';
+    final specialty = partner?.specialtyLabel.trim().isNotEmpty == true
+        ? partner!.specialtyLabel
+        : '수입차 엔진, 미션, 오버홀 전문';
+    final address = partner?.address.trim().isNotEmpty == true
+        ? partner!.address
+        : '경기도 김포시 통진읍 월하로 120';
+    final badges = partner?.badges.isNotEmpty == true
+        ? partner!.badges
+        : const ['당일 예약 가능', '보증 서비스'];
+    final ratingAvg = partner?.ratingAverage ?? 4.8;
+    final ratingCount = partner?.ratingCount ?? 128;
+    final photoURL = partner?.photoURL.trim() ?? '';
+    final ratingText = ratingCount > 0
+        ? '${ratingAvg.toStringAsFixed(1)} ($ratingCount)'
+        : ratingAvg > 0
+            ? ratingAvg.toStringAsFixed(1)
+            : '';
+
+    final fallback = ColoredBox(
+      color: cf.surfaceVariant,
+      child: Icon(
+        CupertinoIcons.building_2_fill,
+        color: cf.textSecondary,
       ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: ColoredBox(
-              color: cf.surfaceVariant,
+    );
+
+    final Widget photoChild;
+    if (photoURL.isNotEmpty) {
+      photoChild = CachedNetworkImage(
+        imageUrl: photoURL,
+        fit: BoxFit.cover,
+        alignment: Alignment.center,
+        width: _cardHeight,
+        height: _cardHeight,
+        memCacheWidth: (_cardHeight * 2).round(),
+        errorWidget: (_, _, _) => Image.asset(
+          isDark ? _darkAsset : _lightAsset,
+          fit: BoxFit.cover,
+          width: _cardHeight,
+          height: _cardHeight,
+        ),
+        placeholder: (_, _) => ColoredBox(color: cf.surfaceVariant),
+      );
+    } else {
+      photoChild = Image.asset(
+        isDark ? _darkAsset : _lightAsset,
+        fit: BoxFit.cover,
+        width: _cardHeight,
+        height: _cardHeight,
+        filterQuality: FilterQuality.medium,
+        errorBuilder: (_, _, _) => fallback,
+      );
+    }
+
+    return Material(
+      color: cf.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: cf.divider),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        height: _cardHeight,
+        width: double.infinity,
+        child: Row(
+          children: [
+            SizedBox(
+              width: _cardHeight,
+              height: _cardHeight,
+              child: photoChild,
+            ),
+            Expanded(
               child: SizedBox(
-                width: 64,
-                height: 64,
-                child: Icon(
-                  CupertinoIcons.building_2_fill,
-                  color: cf.textSecondary,
+                height: _cardHeight,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                color: cf.textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            CupertinoIcons.checkmark_seal_fill,
+                            size: 16,
+                            color: AppColors.accentBlue,
+                          ),
+                        ],
+                      ),
+                      if (ratingText.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            const Icon(
+                              CupertinoIcons.star_fill,
+                              size: 14,
+                              color: Color(0xFFFFCC00),
+                            ),
+                            const SizedBox(width: 3),
+                            Flexible(
+                              child: Text(
+                                ratingText,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: cf.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 3),
+                      Text(
+                        specialty,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: cf.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        address,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: cf.textSecondary,
+                        ),
+                      ),
+                      if (badges.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              for (final b in badges.take(3)) ...[
+                                _TagChip(b),
+                                const SizedBox(width: 6),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      '카팩토리 안산점',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                        color: cf.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      CupertinoIcons.checkmark_seal_fill,
-                      size: 16,
-                      color: AppColors.accentBlue,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(
-                      CupertinoIcons.star_fill,
-                      size: 14,
-                      color: Color(0xFFFFCC00),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '4.8 (128) | 9.2km',
-                      style: TextStyle(fontSize: 12, color: cf.textSecondary),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '엔진, 미션, 하체 전문 장착',
-                  style: TextStyle(fontSize: 12, color: cf.textSecondary),
-                ),
-                const SizedBox(height: 8),
-                const Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: [
-                    _TagChip('정품 부품 취급'),
-                    _TagChip('당일 장착 가능'),
-                    _TagChip('보증 서비스'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: cf.surfaceVariant,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              CupertinoIcons.chevron_right,
-              size: 14,
-              color: cf.textSecondary,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

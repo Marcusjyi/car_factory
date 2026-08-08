@@ -3,9 +3,13 @@ import Link from "next/link";
 import { MapPin, Phone, Clock, Wrench } from "lucide-react";
 import { SiteHeader, Breadcrumbs } from "@/components/layout/SiteHeader";
 import { FeatureBar } from "@/components/layout/FeatureBar";
-import { INSTALLERS } from "@/lib/installers";
+import { listInstallers } from "@/lib/partners-server";
 
-export default function InstallersPage() {
+export const dynamic = "force-dynamic";
+
+export default async function InstallersPage() {
+  const shops = await listInstallers();
+
   return (
     <div className="min-h-screen bg-bg">
       <SiteHeader showCategoryNav />
@@ -28,20 +32,22 @@ export default function InstallersPage() {
         </section>
 
         <ul className="grid gap-5 md:grid-cols-2">
-          {INSTALLERS.map((shop) => (
+          {shops.map((shop) => (
             <li key={shop.id}>
               <Link
                 href={`/installers/${shop.id}/reserve`}
                 className="block overflow-hidden rounded-2xl border border-border bg-white transition hover:border-primary/40 hover:shadow-sm"
               >
                 <div className="relative h-44 w-full bg-gray-100">
-                  <Image
-                    src={shop.image}
-                    alt={shop.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 560px"
-                  />
+                  {shop.image ? (
+                    <Image
+                      src={shop.image}
+                      alt={shop.name}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 560px"
+                    />
+                  ) : null}
                 </div>
                 <div className="space-y-3 p-5">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -53,6 +59,18 @@ export default function InstallersPage() {
                   <p className="text-sm leading-relaxed text-text-secondary">
                     {shop.description}
                   </p>
+                  {shop.badges && shop.badges.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {shop.badges.map((b) => (
+                        <span
+                          key={b}
+                          className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+                        >
+                          {b}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                   <ul className="space-y-1.5 text-sm text-text-secondary">
                     <li className="flex items-start gap-2">
                       <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/config/app_config.dart';
 import 'core/firebase/firebase_bootstrap.dart';
+import 'core/notifications/fcm_service.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode_provider.dart';
-import 'core/config/app_config.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +16,7 @@ Future<void> main() async {
   try {
     await FirebaseBootstrap.init();
     firebaseOk = true;
+    await FcmService.instance.start();
   } catch (e) {
     firebaseError = e;
     FirebaseBootstrap.debugLog('Firebase init failed: $e');
@@ -77,6 +79,7 @@ class CarFactoryApp extends ConsumerWidget {
     }
 
     final router = ref.watch(appRouterProvider);
+    FcmService.instance.attachRouter(router);
     return MaterialApp.router(
       title: AppConfig.appName,
       theme: AppTheme.light(),

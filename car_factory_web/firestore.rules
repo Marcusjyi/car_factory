@@ -107,6 +107,11 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
     }
 
+    /** FCM 디바이스 토큰 — 본인만 */
+    match /users/{uid}/fcmTokens/{tokenId} {
+      allow read, write: if isOwner(uid);
+    }
+
     /** 채팅 미읽음 합계 등 — 본인 읽기, 쓰기는 Functions만 */
     match /users/{uid}/counters/{counterId} {
       allow read: if isOwner(uid);
@@ -170,6 +175,15 @@ service cloud.firestore {
     match /admins/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       allow create, update, delete: if false;
+    }
+
+    /**
+     * 장착 파트너스(장착 대행점)
+     * 공개 읽기(활성만 클라이언트 필터), 쓰기는 어드민만
+     */
+    match /partners/{partnerId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     /** 상품 고유번호 일별 시퀀스 — Cloud Functions(Admin)만 접근 */

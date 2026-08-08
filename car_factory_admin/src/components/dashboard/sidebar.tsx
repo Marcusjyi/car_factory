@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Package,
   ShoppingBag,
+  Store,
   UserCircle,
   Users,
 } from "lucide-react";
@@ -18,6 +19,7 @@ const navItems = [
   { href: "/dashboard/users", label: "회원", icon: Users },
   { href: "/dashboard/products", label: "상품", icon: Package },
   { href: "/dashboard/orders", label: "주문", icon: ShoppingBag },
+  { href: "/dashboard/partners", label: "파트너스", icon: Store },
 ];
 
 export function DashboardSidebar() {
